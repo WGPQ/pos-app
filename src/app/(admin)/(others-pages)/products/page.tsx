@@ -282,10 +282,10 @@ const ProductsPage = () => {
                       <span className="text-sm text-gray-900">{product.quantity}</span>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900 whitespace-pre-line">{product.cost.toString()}</div>
+                      <div className="text-sm text-gray-900 whitespace-pre-line">${parseFloat(product.cost.toString()).toFixed(2)}</div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-sm font-medium text-gray-900">{product.price}</span>
+                      <span className="text-sm font-medium text-gray-900">${parseFloat(product.price.toString()).toFixed(2)}</span>
                     </td>
                     <td className="px-6 py-4">
                       <Badge
@@ -296,7 +296,7 @@ const ProductsPage = () => {
                             : "bg-red-100 text-red-800 hover:bg-red-200"
                         }
                       >
-                        {product.in_store ? "In Store" : "Out of Stock"}
+                        {product.in_store ? "En tienda" : "Agotado"}
                       </Badge>
                     </td>
                     <td className="px-6 py-4">

@@ -173,12 +173,12 @@ const AddItem: React.FC<AddItemProps> = ({ isNewProductOpen, setIsNewProductOpen
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="price">Cantidad *</Label>
+                            <Label htmlFor="quantity">Cantidad *</Label>
                             <Input
-                                id="price"
+                                id="quantity"
                                 type="number"
                                 placeholder="0.00"
-                                value={newProduct.price}
+                                value={newProduct.quantity}
                                 onChange={(e) => setNewProduct({ ...newProduct, quantity: +e.target.value })}
                                 required
                             />

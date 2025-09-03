@@ -50,7 +50,7 @@ const ItemDetails:FC<ItemDetailsProps> = ({ isProductDetailsOpen, setIsProductDe
                                     </Badge>
                                 </div>
                                 <div>
-                                    <span className="text-2xl font-bold text-gray-900">{selectedProduct.price.toString()}</span>
+                                    <span className="text-2xl font-bold text-gray-900">$ {parseFloat(selectedProduct.price.toString()).toFixed(2)}</span>
                                 </div>
                             </div>
                         </div>
