@@ -22,32 +22,32 @@ type NavItem = {
 const navItems: NavItem[] = [
   {
     icon: HomeIcon,
-    name: "Home",
+    name: "Inicio",
     path: "/",
   },
   {
     icon: Grid3X3,
-    name: "Products",
+    name: "Inventario",
     path: "/products",
   },
   {
     icon: ShoppingCart,
-    name: "Orders",
+    name: "Ordenes",
     path: "/orders",
   },
   {
     icon: Tag,
-    name: "Tags",
+    name: "Etiquetas",
     path: "/tags",
   },
   {
     icon: Users,
-    name: "Users",
+    name: "Usuarios",
     path: "/users",
   },
   {
     icon: BarChart3,
-    name: "Reports",
+    name: "Reportes",
     path: "/reports",
   },
 ];

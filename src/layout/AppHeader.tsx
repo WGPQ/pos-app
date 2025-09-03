@@ -14,7 +14,7 @@ const AppHeader = () => {
                     <Bell className="w-5 h-5" />
                 </Button> */}
                 <Avatar className="w-8 h-8">
-                    <AvatarFallback className="bg-blue-600 text-white text-sm font-medium">PA</AvatarFallback>
+                    <AvatarFallback className="bg-blue-600 text-white text-sm font-medium">EP</AvatarFallback>
                 </Avatar>
             </div>
         </header>

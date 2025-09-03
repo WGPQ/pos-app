@@ -2,7 +2,7 @@ import React, { FC } from 'react'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
-import { Product } from '@/app/(admin)/(others-pages)/products/page';
+import { Product } from '@prisma/client';
 interface ItemDetailsProps {
     isProductDetailsOpen: boolean;
     setIsProductDetailsOpen: (open: boolean) => void;
@@ -14,8 +14,8 @@ const ItemDetails:FC<ItemDetailsProps> = ({ isProductDetailsOpen, setIsProductDe
         <Dialog open={isProductDetailsOpen} onOpenChange={setIsProductDetailsOpen}>
             <DialogContent className="sm:max-w-[600px]">
                 <DialogHeader>
-                    <DialogTitle>Product Details</DialogTitle>
-                    <DialogDescription>View detailed information about this product.</DialogDescription>
+                    <DialogTitle>Detalle de Producto</DialogTitle>
+                    <DialogDescription>Ver información detallada sobre este producto.</DialogDescription>
                 </DialogHeader>
 
                 {selectedProduct && (
@@ -35,22 +35,22 @@ const ItemDetails:FC<ItemDetailsProps> = ({ isProductDetailsOpen, setIsProductDe
                                     <p className="text-sm text-gray-500">SKU: {selectedProduct.sku}</p>
                                 </div>
                                 <div className="flex items-center gap-4">
-                                    <Badge variant="outline" className="text-xs">
+                                    {/* <Badge variant="outline" className="text-xs">
                                         {selectedProduct.category}
-                                    </Badge>
+                                    </Badge> */}
                                     <Badge
-                                        variant={selectedProduct.status === "Active" ? "default" : "destructive"}
+                                        variant={selectedProduct.in_store ? "default" : "destructive"}
                                         className={
-                                            selectedProduct.status === "Active"
+                                            selectedProduct.in_store
                                                 ? "bg-green-100 text-green-800 hover:bg-green-200"
                                                 : "bg-red-100 text-red-800 hover:bg-red-200"
                                         }
                                     >
-                                        {selectedProduct.status}
+                                        {selectedProduct.in_store ? "In Store" : "Out of Stock"}
                                     </Badge>
                                 </div>
                                 <div>
-                                    <span className="text-2xl font-bold text-gray-900">{selectedProduct.price}</span>
+                                    <span className="text-2xl font-bold text-gray-900">{selectedProduct.price.toString()}</span>
                                 </div>
                             </div>
                         </div>
@@ -58,60 +58,57 @@ const ItemDetails:FC<ItemDetailsProps> = ({ isProductDetailsOpen, setIsProductDe
                         {/* Product Details Grid */}
                         <div className="grid grid-cols-2 gap-6">
                             <div className="space-y-3">
-                                <h4 className="font-medium text-gray-900">Product Information</h4>
+                                <h4 className="font-medium text-gray-900">Información del Producto</h4>
                                 <div className="space-y-2 text-sm">
-                                    <div className="flex justify-between">
+                                    {/* <div className="flex justify-between">
                                         <span className="text-gray-500">Category:</span>
                                         <span className="text-gray-900">{selectedProduct.category}</span>
-                                    </div>
+                                    </div> */}
                                     <div className="flex justify-between">
                                         <span className="text-gray-500">SKU:</span>
                                         <span className="text-gray-900">{selectedProduct.sku}</span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span className="text-gray-500">Status:</span>
-                                        <span className="text-gray-900">{selectedProduct.status}</span>
+                                        <span className="text-gray-500">Cantidad:</span>
+                                        <span className="text-gray-900">{selectedProduct.quantity.toString()}</span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span className="text-gray-500">Price:</span>
-                                        <span className="text-gray-900 font-medium">{selectedProduct.price}</span>
+                                        <span className="text-gray-500">Costo:</span>
+                                        <span className="text-gray-900 font-medium">{selectedProduct.cost.toString()}</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="space-y-3">
+                            {/* <div className="space-y-3">
                                 <h4 className="font-medium text-gray-900">Variants</h4>
                                 <div className="text-sm text-gray-900 whitespace-pre-line bg-gray-50 p-3 rounded-lg">
-                                    {selectedProduct.variant}
+                                    {'Variants'}
                                 </div>
-                            </div>
+                            </div> */}
                         </div>
 
                         {/* Additional Information */}
                         <div className="space-y-3">
-                            <h4 className="font-medium text-gray-900">Description</h4>
+                            <h4 className="font-medium text-gray-900">Descripción</h4>
                             <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
-                                This is a high-quality {selectedProduct.category.toLowerCase()} item available in multiple variants.
-                                Perfect for customers looking for style and comfort. The product is currently{" "}
-                                {selectedProduct.status.toLowerCase()}
-                                and ready for purchase.
+                                {selectedProduct.description || 'No hay descripción.'}
                             </p>
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="flex justify-between pt-4 border-t border-gray-200">
+                        {/* <div className="flex justify-between pt-4 border-t border-gray-200">
                             <div className="flex gap-2">
                                 <Button variant="outline" size="sm">
-                                    Edit Product
+                                    Editar Producto
                                 </Button>
                                 <Button variant="outline" size="sm">
-                                    Duplicate
+                                    Duplicar
                                 </Button>
                             </div>
                             <Button variant="destructive" size="sm" className="bg-red-600 hover:bg-red-700">
-                                Delete Product
+                                Eliminar Producto
                             </Button>
-                        </div>
+                        </div> */}
                     </div>
                 )}
 

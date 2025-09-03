@@ -1,64 +1,122 @@
 'use client'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog'
 import { Input } from '../ui/input'
 import { Button } from '../ui/button'
 import { Textarea } from '../ui/textarea'
 import { Label } from '../ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
+import { useProducts } from '@/hooks/useProducts'
+import { Product } from '@prisma/client'
 interface AddItemProps {
     isNewProductOpen: boolean
+    selectedProduct: Product | null;
     setIsNewProductOpen: (open: boolean) => void
 }
+const initialValues = {
+    name: "",
+    description: "",
+    image: "",
+    category: "oficina",
+    sku: "",
+    quantity: 0,
+    price: 0,
+    cost: 0,
+    in_store: true,
+};
 
-const AddItem: React.FC<AddItemProps> = ({ isNewProductOpen, setIsNewProductOpen }) => {
-    const [newProduct, setNewProduct] = useState({
-        name: "",
-        category: "",
-        sku: "",
-        variantCount: "",
-        variantDescription: "",
-        price: "",
-        status: "Active",
-    })
+const AddItem: React.FC<AddItemProps> = ({ isNewProductOpen, setIsNewProductOpen, selectedProduct }) => {
+    const { addProduct, editProduct } = useProducts();
+    const [newProduct, setNewProduct] = useState(initialValues)
+    const onCreate = () => {
+        addProduct.mutate({
+            name: newProduct.name,
+            description: newProduct.description!,
+            image: "",
+            category: newProduct.category,
+            sku: newProduct.sku,
+            quantity: newProduct.quantity,
+            price: newProduct.price,
+            cost: newProduct.cost,
+            in_store: true,
+        });
+    }
+    const onUpdate = () => {
+        editProduct.mutate({
+            id: selectedProduct!.id,
+            data: {
+                cost: newProduct.cost,
+                description: newProduct.description!,
+                name: newProduct.name,
+                sku: newProduct.sku,
+                price: newProduct.price,
+                quantity: newProduct.quantity,
+            }
+        });
+    }
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
-        console.log("New product:", newProduct)
-        setIsNewProductOpen(false)
-        setNewProduct({
-            name: "",
-            category: "",
-            sku: "",
-            variantCount: "",
-            variantDescription: "",
-            price: "",
-            status: "Active",
-        })
+        try {
+            if (selectedProduct) {
+                onUpdate();
+            } else {
+                onCreate();
+            }
+            setNewProduct(initialValues);
+            setIsNewProductOpen(false);
+        } catch (error) {
+            console.error("Error creating product:", error);
+        }
     }
+
+
+
+    useEffect(() => {
+        if (selectedProduct) {
+            setNewProduct({
+                name: selectedProduct.name,
+                description: selectedProduct.description!,
+                image: selectedProduct.image!,
+                category: selectedProduct.category,
+                sku: selectedProduct.sku,
+                quantity: selectedProduct.quantity,
+                price: +selectedProduct.price,
+                cost: +selectedProduct.cost,
+                in_store: selectedProduct.in_store,
+            });
+        } else {
+            setNewProduct(initialValues);
+        }
+        return () => {
+            setNewProduct(initialValues);
+        }
+    }, [selectedProduct])
+
     return (
         <Dialog open={isNewProductOpen} onOpenChange={setIsNewProductOpen}>
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
-                    <DialogTitle>Add New Product</DialogTitle>
+                    <DialogTitle>Agregar Nuevo Producto</DialogTitle>
                     <DialogDescription>
-                        Create a new product for your inventory. Fill in all the required information below.
+                        Crea un nuevo producto para tu inventario. Completa toda la información requerida a continuación.
                     </DialogDescription>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="name">Product Name *</Label>
+                            <Label htmlFor="name">Nombre *</Label>
                             <Input
                                 id="name"
-                                placeholder="Enter product name"
+                                placeholder="Ingrese el nombre del producto"
                                 value={newProduct.name}
                                 onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
                                 required
                             />
                         </div>
 
-                        <div className="space-y-2">
+                        {/* <div className="space-y-2">
                             <Label htmlFor="category">Category *</Label>
                             <Select
                                 value={newProduct.category}
@@ -75,7 +133,7 @@ const AddItem: React.FC<AddItemProps> = ({ isNewProductOpen, setIsNewProductOpen
                                     <SelectItem value="JEWELRY">JEWELRY</SelectItem>
                                 </SelectContent>
                             </Select>
-                        </div>
+                        </div> */}
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -83,40 +141,48 @@ const AddItem: React.FC<AddItemProps> = ({ isNewProductOpen, setIsNewProductOpen
                             <Label htmlFor="sku">SKU *</Label>
                             <Input
                                 id="sku"
-                                placeholder="e.g., TS38790"
+                                placeholder="e.g., ESF-001"
                                 value={newProduct.sku}
                                 onChange={(e) => setNewProduct({ ...newProduct, sku: e.target.value })}
                                 required
                             />
                         </div>
-
                         <div className="space-y-2">
-                            <Label htmlFor="price">Price *</Label>
+                            <Label htmlFor="variantCount">Costo *</Label>
                             <Input
-                                id="price"
+                                id="variantCount"
                                 type="number"
                                 placeholder="0.00"
-                                value={newProduct.price}
-                                onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
                                 required
+                                value={newProduct.cost}
+                                onChange={(e) => setNewProduct({ ...newProduct, cost: +e.target.value })}
                             />
                         </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="variantCount">Variant Count</Label>
+                            <Label htmlFor="price">Precio *</Label>
                             <Input
-                                id="variantCount"
+                                id="price"
                                 type="number"
-                                placeholder="Number of variants"
-                                value={newProduct.variantCount}
-                                onChange={(e) => setNewProduct({ ...newProduct, variantCount: e.target.value })}
+                                placeholder="0.00"
+                                value={newProduct.price}
+                                onChange={(e) => setNewProduct({ ...newProduct, price: +e.target.value })}
+                                required
                             />
                         </div>
-
                         <div className="space-y-2">
-                            <Label htmlFor="status">Status *</Label>
+                            <Label htmlFor="price">Cantidad *</Label>
+                            <Input
+                                id="price"
+                                type="number"
+                                placeholder="0.00"
+                                value={newProduct.price}
+                                onChange={(e) => setNewProduct({ ...newProduct, quantity: +e.target.value })}
+                                required
+                            />
+                            {/* <Label htmlFor="status">Status *</Label>
                             <Select
                                 value={newProduct.status}
                                 onValueChange={(value) => setNewProduct({ ...newProduct, status: value })}
@@ -128,27 +194,27 @@ const AddItem: React.FC<AddItemProps> = ({ isNewProductOpen, setIsNewProductOpen
                                     <SelectItem value="Active">Active</SelectItem>
                                     <SelectItem value="Out of Stock">Out of Stock</SelectItem>
                                 </SelectContent>
-                            </Select>
+                            </Select> */}
                         </div>
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="variantDescription">Variant Description</Label>
+                        <Label htmlFor="variantDescription">Descripción</Label>
                         <Textarea
                             id="variantDescription"
-                            placeholder="e.g., Varies on: Size, Color"
-                            value={newProduct.variantDescription}
-                            onChange={(e) => setNewProduct({ ...newProduct, variantDescription: e.target.value })}
+                            placeholder="ej., varía según: tamaño, color"
+                            value={newProduct.description!}
+                            onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
                             rows={2}
                         />
                     </div>
 
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => setIsNewProductOpen(false)}>
-                            Cancel
+                            Cancelar
                         </Button>
                         <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-                            Create Product
+                            Guardar
                         </Button>
                     </DialogFooter>
                 </form>

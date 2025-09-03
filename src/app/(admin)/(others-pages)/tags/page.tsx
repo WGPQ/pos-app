@@ -3,7 +3,7 @@ import React from 'react'
 const TagsPage = () => {
   return (
     <div>
-      TagsPage
+        Página de Etiquetas
     </div>
   )
 }

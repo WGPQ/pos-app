@@ -1,14 +1,16 @@
 'use client'
 import AddItem from '@/components/Item/AddItem'
+import DeleteItem from '@/components/Item/DeleteItem'
 import ItemDetails from '@/components/Item/ItemDetails'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
+import { useProducts } from '@/hooks/useProducts'
+import { Product } from '@prisma/client'
 import {
   Search,
   Filter,
-  Download,
   Plus,
   MoreHorizontal,
   ChevronLeft,
@@ -18,125 +20,16 @@ import {
   Copy,
 } from "lucide-react"
 import { useMemo, useState } from 'react'
-export interface Product {
-  id: number;
-  image: string;
-  name: string;
-  category: string;
-  sku: string;
-  variant: string;
-  price: string;
-  status: "Active" | "Out of Stock";
-}
-
-const products: Product[] = [
-  {
-    id: 1,
-    image: "/solid-lapel-neck-blouse-orange.png",
-    name: "Solid Lapel Neck Blouse",
-    category: "CLOTHING",
-    sku: "TS38790",
-    variant: "11\nVaries on: Size, Color",
-    price: "$24",
-    status: "Active",
-  },
-  {
-    id: 2,
-    image: "/point-toe-heeled-pumps-gray.png",
-    name: "Point Toe Heeled Pumps",
-    category: "SHOES",
-    sku: "TS38843",
-    variant: "4\nVaries on: Size",
-    price: "$56",
-    status: "Out of Stock",
-  },
-  {
-    id: 3,
-    image: "/solid-rib-knit-crop-cami-top-red.png",
-    name: "Solid Rib-knit Crop Cami Top",
-    category: "CLOTHING",
-    sku: "TS12334",
-    variant: "8\nVaries on: Size, Color",
-    price: "$19",
-    status: "Out of Stock",
-  },
-  {
-    id: 4,
-    image: "/crop-tank-top-pink.png",
-    name: "Crop Tank Top",
-    category: "CLOTHING",
-    sku: "TS77845",
-    variant: "6\nVaries on: Size, Material",
-    price: "$19",
-    status: "Active",
-  },
-  {
-    id: 5,
-    image: "/v-neck-rib-knit-top-green.png",
-    name: "V-Neck Rib-knit Top",
-    category: "CLOTHING",
-    sku: "TS64358",
-    variant: "7\nVaries on: Color, Material",
-    price: "$13",
-    status: "Active",
-  },
-  {
-    id: 6,
-    image: "/minimalist-flap-chain-bag-black.png",
-    name: "Minimalist Flap Chain Bag",
-    category: "BAG",
-    sku: "TS00213",
-    variant: "2\nVaries on: Color",
-    price: "$32",
-    status: "Active",
-  },
-  {
-    id: 7,
-    image: "/front-crop-top-blue.png",
-    name: "Front Crop Top",
-    category: "CLOTHING",
-    sku: "TS36940",
-    variant: "2\nVaries on: Color",
-    price: "$17",
-    status: "Active",
-  },
-  {
-    id: 8,
-    image: "/scallop-drawstring-crop-top-beige.png",
-    name: "Scallop Drawstring Crop Top",
-    category: "CLOTHING",
-    sku: "TS13346",
-    variant: "5\nVaries on: Size, Color",
-    price: "$21",
-    status: "Active",
-  },
-  {
-    id: 9,
-    image: "/pineapple-earrings-gold.png",
-    name: "Pineapple Earrings",
-    category: "JEWELRY",
-    sku: "TS84223",
-    variant: "1\nVaries on: Color",
-    price: "$8",
-    status: "Out of Stock",
-  },
-  {
-    id: 10,
-    image: "/floral-shirred-top-burgundy.png",
-    name: "Floral Shirred Top",
-    category: "CLOTHING",
-    sku: "TS84422",
-    variant: "6\nVaries on: Size, Color",
-    price: "$19",
-    status: "Active",
-  },
-]
 
 const ProductsPage = () => {
+  const { productsQuery, removeProduct } = useProducts();
+  const products = productsQuery.data || [];
   const [currentPage, setCurrentPage] = useState(2)
   const [isNewProductOpen, setIsNewProductOpen] = useState(false)
   const [isProductDetailsOpen, setIsProductDetailsOpen] = useState(false)
-  const [selectedProduct, setSelectedProduct] = useState<(typeof products)[0] | null>(null)
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<string[]>([])
   const [categoryFilter, setCategoryFilter] = useState<string[]>([])
@@ -144,12 +37,13 @@ const ProductsPage = () => {
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
       const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase())
-      const matchesStatus = statusFilter.length === 0 || statusFilter.includes(product.status)
+      // const matchesStatus = statusFilter.length === 0 || statusFilter.includes(product.status)
+      const matchesStatus = statusFilter.length === 0;
       const matchesCategory = categoryFilter.length === 0 || categoryFilter.includes(product.category)
 
       return matchesSearch && matchesStatus && matchesCategory
     })
-  }, [searchTerm, statusFilter, categoryFilter])
+  }, [searchTerm, statusFilter, categoryFilter, products])
 
   const clearAllFilters = () => {
     setSearchTerm("")
@@ -160,23 +54,35 @@ const ProductsPage = () => {
   const hasActiveFilters = searchTerm || statusFilter.length > 0 || categoryFilter.length > 0
 
   const openProductDetails = (product: (typeof products)[0]) => {
-    setSelectedProduct(product)
+    setSelectedProduct(product as unknown as Product)
     setIsProductDetailsOpen(true)
   }
 
   const handleEditProduct = (product: (typeof products)[0]) => {
-    console.log("Edit product:", product)
-    // Here you would typically open an edit dialog or navigate to edit page
+    setSelectedProduct(product as unknown as Product)
+    setIsNewProductOpen(true)
   }
 
   const handleDeleteProduct = (product: (typeof products)[0]) => {
-    console.log("Delete product:", product)
-    // Here you would typically show a confirmation dialog and then delete
+    setProductToDelete(product as unknown as Product)
+    setIsDeleteDialogOpen(true)
   }
 
   const handleDuplicateProduct = (product: (typeof products)[0]) => {
     console.log("Duplicate product:", product)
     // Here you would typically create a copy of the product
+  }
+
+  const confirmDeleteProduct = () => {
+    try {
+      if (productToDelete) {
+        removeProduct.mutate(productToDelete.id);
+        setIsDeleteDialogOpen(false);
+        setProductToDelete(null);
+      }
+    } catch (error) {
+      console.error("Error deleting product:", error);
+    }
   }
   return (
     <>
@@ -185,7 +91,7 @@ const ProductsPage = () => {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
           {/* Products Header */}
           <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900">Products</h2>
+            <h2 className="text-lg font-medium text-gray-900">Inventario</h2>
           </div>
 
           {/* Search and Actions */}
@@ -194,7 +100,7 @@ const ProductsPage = () => {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
-                  placeholder="Search products..."
+                  placeholder="Buscar productos..."
                   className="pl-10 w-80 h-9"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -207,14 +113,14 @@ const ProductsPage = () => {
                   {statusFilter.length > 0 && categoryFilter.length > 0 && ", "}
                   {categoryFilter.length > 0 && `Category: ${categoryFilter.join(", ")}`}
                   {searchTerm && (statusFilter.length > 0 || categoryFilter.length > 0) && ", "}
-                  {searchTerm && `Search: "${searchTerm}"`}
+                  {searchTerm && `Buscar: "${searchTerm}"`}
                   <button className="ml-2 text-gray-500 hover:text-gray-700" onClick={clearAllFilters}>
                     ×
                   </button>
                 </Badge>
               )}
 
-              <DropdownMenu>
+              {/* <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm" className="h-9 bg-transparent">
                     <Filter className="w-4 h-4 mr-2" />
@@ -300,7 +206,7 @@ const ProductsPage = () => {
                     Jewelry
                   </DropdownMenuCheckboxItem>
                 </DropdownMenuContent>
-              </DropdownMenu>
+              </DropdownMenu> */}
             </div>
 
             <div className="flex items-center gap-2">
@@ -314,7 +220,7 @@ const ProductsPage = () => {
                 onClick={() => setIsNewProductOpen(true)}
               >
                 <Plus className="w-4 h-4 mr-2" />
-                New product
+                Nuevo Producto
               </Button>
             </div>
           </div>
@@ -328,22 +234,22 @@ const ProductsPage = () => {
                     <input type="checkbox" className="rounded border-gray-300" />
                   </th> */}
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Product Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Category
+                    Producto
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     SKU
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Variant
+                    Cantidad
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Price
+                    Costo
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
+                    Precio
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Estado
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
                 </tr>
@@ -370,27 +276,27 @@ const ProductsPage = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-sm text-gray-900">{product.category}</span>
-                    </td>
-                    <td className="px-6 py-4">
                       <span className="text-sm text-gray-900">{product.sku}</span>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900 whitespace-pre-line">{product.variant}</div>
+                      <span className="text-sm text-gray-900">{product.quantity}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900 whitespace-pre-line">{product.cost.toString()}</div>
                     </td>
                     <td className="px-6 py-4">
                       <span className="text-sm font-medium text-gray-900">{product.price}</span>
                     </td>
                     <td className="px-6 py-4">
                       <Badge
-                        variant={product.status === "Active" ? "default" : "destructive"}
+                        variant={product.in_store ? "default" : "destructive"}
                         className={
-                          product.status === "Active"
+                          product.in_store
                             ? "bg-green-100 text-green-800 hover:bg-green-200"
                             : "bg-red-100 text-red-800 hover:bg-red-200"
                         }
                       >
-                        {product.status}
+                        {product.in_store ? "In Store" : "Out of Stock"}
                       </Badge>
                     </td>
                     <td className="px-6 py-4">
@@ -403,22 +309,22 @@ const ProductsPage = () => {
                         <DropdownMenuContent align="end" className="w-48">
                           <DropdownMenuItem onClick={() => handleEditProduct(product)} className="cursor-pointer">
                             <Edit className="w-4 h-4 mr-2" />
-                            Edit Product
+                            Editar
                           </DropdownMenuItem>
-                          <DropdownMenuItem
+                          {/* <DropdownMenuItem
                             onClick={() => handleDuplicateProduct(product)}
                             className="cursor-pointer"
                           >
                             <Copy className="w-4 h-4 mr-2" />
                             Duplicate Product
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
+                          </DropdownMenuItem> */}
+                          {/* <DropdownMenuSeparator /> */}
                           <DropdownMenuItem
                             onClick={() => handleDeleteProduct(product)}
                             className="cursor-pointer text-red-600 focus:text-red-600"
                           >
                             <Trash2 className="w-4 h-4 mr-2" />
-                            Delete Product
+                            Eliminar
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -430,7 +336,7 @@ const ProductsPage = () => {
           </div>
 
           {/* Pagination */}
-          <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+          {/* <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
@@ -497,19 +403,31 @@ const ProductsPage = () => {
                 <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
-      
+
       <AddItem
         isNewProductOpen={isNewProductOpen}
-        setIsNewProductOpen={setIsNewProductOpen}
+        setIsNewProductOpen={(status) => {
+          setIsNewProductOpen(status);
+          if (status === false) {
+            setSelectedProduct(null);
+          }
+        }}
+        selectedProduct={selectedProduct}
       />
 
       <ItemDetails
         isProductDetailsOpen={isProductDetailsOpen}
         setIsProductDetailsOpen={setIsProductDetailsOpen}
         selectedProduct={selectedProduct}
+      />
+      <DeleteItem
+        isDeleteDialogOpen={isDeleteDialogOpen}
+        setIsDeleteDialogOpen={setIsDeleteDialogOpen}
+        productToDelete={productToDelete}
+        confirmDeleteProduct={confirmDeleteProduct}
       />
     </>
   )
