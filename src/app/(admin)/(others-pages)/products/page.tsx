@@ -420,7 +420,10 @@ const ProductsPage = () => {
 
       <ItemDetails
         isProductDetailsOpen={isProductDetailsOpen}
-        setIsProductDetailsOpen={setIsProductDetailsOpen}
+        setIsProductDetailsOpen={()=>{
+          setIsProductDetailsOpen(false);
+          setSelectedProduct(null);
+        }}
         selectedProduct={selectedProduct}
       />
       <DeleteItem
