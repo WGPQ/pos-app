@@ -1,0 +1,518 @@
+'use client'
+import AddItem from '@/components/Item/AddItem'
+import ItemDetails from '@/components/Item/ItemDetails'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { Input } from '@/components/ui/input'
+import {
+  Search,
+  Filter,
+  Download,
+  Plus,
+  MoreHorizontal,
+  ChevronLeft,
+  ChevronRight,
+  Edit,
+  Trash2,
+  Copy,
+} from "lucide-react"
+import { useMemo, useState } from 'react'
+export interface Product {
+  id: number;
+  image: string;
+  name: string;
+  category: string;
+  sku: string;
+  variant: string;
+  price: string;
+  status: "Active" | "Out of Stock";
+}
+
+const products: Product[] = [
+  {
+    id: 1,
+    image: "/solid-lapel-neck-blouse-orange.png",
+    name: "Solid Lapel Neck Blouse",
+    category: "CLOTHING",
+    sku: "TS38790",
+    variant: "11\nVaries on: Size, Color",
+    price: "$24",
+    status: "Active",
+  },
+  {
+    id: 2,
+    image: "/point-toe-heeled-pumps-gray.png",
+    name: "Point Toe Heeled Pumps",
+    category: "SHOES",
+    sku: "TS38843",
+    variant: "4\nVaries on: Size",
+    price: "$56",
+    status: "Out of Stock",
+  },
+  {
+    id: 3,
+    image: "/solid-rib-knit-crop-cami-top-red.png",
+    name: "Solid Rib-knit Crop Cami Top",
+    category: "CLOTHING",
+    sku: "TS12334",
+    variant: "8\nVaries on: Size, Color",
+    price: "$19",
+    status: "Out of Stock",
+  },
+  {
+    id: 4,
+    image: "/crop-tank-top-pink.png",
+    name: "Crop Tank Top",
+    category: "CLOTHING",
+    sku: "TS77845",
+    variant: "6\nVaries on: Size, Material",
+    price: "$19",
+    status: "Active",
+  },
+  {
+    id: 5,
+    image: "/v-neck-rib-knit-top-green.png",
+    name: "V-Neck Rib-knit Top",
+    category: "CLOTHING",
+    sku: "TS64358",
+    variant: "7\nVaries on: Color, Material",
+    price: "$13",
+    status: "Active",
+  },
+  {
+    id: 6,
+    image: "/minimalist-flap-chain-bag-black.png",
+    name: "Minimalist Flap Chain Bag",
+    category: "BAG",
+    sku: "TS00213",
+    variant: "2\nVaries on: Color",
+    price: "$32",
+    status: "Active",
+  },
+  {
+    id: 7,
+    image: "/front-crop-top-blue.png",
+    name: "Front Crop Top",
+    category: "CLOTHING",
+    sku: "TS36940",
+    variant: "2\nVaries on: Color",
+    price: "$17",
+    status: "Active",
+  },
+  {
+    id: 8,
+    image: "/scallop-drawstring-crop-top-beige.png",
+    name: "Scallop Drawstring Crop Top",
+    category: "CLOTHING",
+    sku: "TS13346",
+    variant: "5\nVaries on: Size, Color",
+    price: "$21",
+    status: "Active",
+  },
+  {
+    id: 9,
+    image: "/pineapple-earrings-gold.png",
+    name: "Pineapple Earrings",
+    category: "JEWELRY",
+    sku: "TS84223",
+    variant: "1\nVaries on: Color",
+    price: "$8",
+    status: "Out of Stock",
+  },
+  {
+    id: 10,
+    image: "/floral-shirred-top-burgundy.png",
+    name: "Floral Shirred Top",
+    category: "CLOTHING",
+    sku: "TS84422",
+    variant: "6\nVaries on: Size, Color",
+    price: "$19",
+    status: "Active",
+  },
+]
+
+const ProductsPage = () => {
+  const [currentPage, setCurrentPage] = useState(2)
+  const [isNewProductOpen, setIsNewProductOpen] = useState(false)
+  const [isProductDetailsOpen, setIsProductDetailsOpen] = useState(false)
+  const [selectedProduct, setSelectedProduct] = useState<(typeof products)[0] | null>(null)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [statusFilter, setStatusFilter] = useState<string[]>([])
+  const [categoryFilter, setCategoryFilter] = useState<string[]>([])
+
+  const filteredProducts = useMemo(() => {
+    return products.filter((product) => {
+      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesStatus = statusFilter.length === 0 || statusFilter.includes(product.status)
+      const matchesCategory = categoryFilter.length === 0 || categoryFilter.includes(product.category)
+
+      return matchesSearch && matchesStatus && matchesCategory
+    })
+  }, [searchTerm, statusFilter, categoryFilter])
+
+  const clearAllFilters = () => {
+    setSearchTerm("")
+    setStatusFilter([])
+    setCategoryFilter([])
+  }
+
+  const hasActiveFilters = searchTerm || statusFilter.length > 0 || categoryFilter.length > 0
+
+  const openProductDetails = (product: (typeof products)[0]) => {
+    setSelectedProduct(product)
+    setIsProductDetailsOpen(true)
+  }
+
+  const handleEditProduct = (product: (typeof products)[0]) => {
+    console.log("Edit product:", product)
+    // Here you would typically open an edit dialog or navigate to edit page
+  }
+
+  const handleDeleteProduct = (product: (typeof products)[0]) => {
+    console.log("Delete product:", product)
+    // Here you would typically show a confirmation dialog and then delete
+  }
+
+  const handleDuplicateProduct = (product: (typeof products)[0]) => {
+    console.log("Duplicate product:", product)
+    // Here you would typically create a copy of the product
+  }
+  return (
+    <>
+      {/* Products Section */}
+      <div className="flex-1 p-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          {/* Products Header */}
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h2 className="text-lg font-medium text-gray-900">Products</h2>
+          </div>
+
+          {/* Search and Actions */}
+          <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Input
+                  placeholder="Search products..."
+                  className="pl-10 w-80 h-9"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+
+              {hasActiveFilters && (
+                <Badge variant="secondary" className="bg-gray-100 text-gray-700 hover:bg-gray-200">
+                  {statusFilter.length > 0 && `Status: ${statusFilter.join(", ")}`}
+                  {statusFilter.length > 0 && categoryFilter.length > 0 && ", "}
+                  {categoryFilter.length > 0 && `Category: ${categoryFilter.join(", ")}`}
+                  {searchTerm && (statusFilter.length > 0 || categoryFilter.length > 0) && ", "}
+                  {searchTerm && `Search: "${searchTerm}"`}
+                  <button className="ml-2 text-gray-500 hover:text-gray-700" onClick={clearAllFilters}>
+                    ×
+                  </button>
+                </Badge>
+              )}
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-9 bg-transparent">
+                    <Filter className="w-4 h-4 mr-2" />
+                    Filters
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56">
+                  <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
+                  <DropdownMenuCheckboxItem
+                    checked={statusFilter.includes("Active")}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setStatusFilter([...statusFilter, "Active"])
+                      } else {
+                        setStatusFilter(statusFilter.filter((s) => s !== "Active"))
+                      }
+                    }}
+                  >
+                    Active
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={statusFilter.includes("Out of Stock")}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setStatusFilter([...statusFilter, "Out of Stock"])
+                      } else {
+                        setStatusFilter(statusFilter.filter((s) => s !== "Out of Stock"))
+                      }
+                    }}
+                  >
+                    Out of Stock
+                  </DropdownMenuCheckboxItem>
+
+                  <DropdownMenuSeparator />
+
+                  <DropdownMenuLabel>Filter by Category</DropdownMenuLabel>
+                  <DropdownMenuCheckboxItem
+                    checked={categoryFilter.includes("CLOTHING")}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setCategoryFilter([...categoryFilter, "CLOTHING"])
+                      } else {
+                        setCategoryFilter(categoryFilter.filter((c) => c !== "CLOTHING"))
+                      }
+                    }}
+                  >
+                    Clothing
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={categoryFilter.includes("SHOES")}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setCategoryFilter([...categoryFilter, "SHOES"])
+                      } else {
+                        setCategoryFilter(categoryFilter.filter((c) => c !== "SHOES"))
+                      }
+                    }}
+                  >
+                    Shoes
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={categoryFilter.includes("BAG")}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setCategoryFilter([...categoryFilter, "BAG"])
+                      } else {
+                        setCategoryFilter(categoryFilter.filter((c) => c !== "BAG"))
+                      }
+                    }}
+                  >
+                    Bag
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={categoryFilter.includes("JEWELRY")}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setCategoryFilter([...categoryFilter, "JEWELRY"])
+                      } else {
+                        setCategoryFilter(categoryFilter.filter((c) => c !== "JEWELRY"))
+                      }
+                    }}
+                  >
+                    Jewelry
+                  </DropdownMenuCheckboxItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* <Button variant="outline" size="sm" className="h-9 bg-transparent">
+                <Download className="w-4 h-4 mr-2" />
+                Export
+              </Button> */}
+              <Button
+                size="sm"
+                className="h-9 bg-blue-600 hover:bg-blue-700"
+                onClick={() => setIsNewProductOpen(true)}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                New product
+              </Button>
+            </div>
+          </div>
+
+          {/* Products Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  {/* <th className="px-6 py-3 text-left">
+                    <input type="checkbox" className="rounded border-gray-300" />
+                  </th> */}
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Product Name
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Category
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    SKU
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Variant
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Price
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredProducts.map((product) => (
+                  <tr key={product.id} className="hover:bg-gray-50">
+                    {/* <td className="px-6 py-4">
+                      <input type="checkbox" className="rounded border-gray-300" />
+                    </td> */}
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={product.image || "/placeholder.svg"}
+                          alt={product.name}
+                          className="w-10 h-10 rounded-lg object-cover"
+                        />
+                        <button
+                          onClick={() => openProductDetails(product)}
+                          className="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors text-left"
+                        >
+                          {product.name}
+                        </button>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm text-gray-900">{product.category}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm text-gray-900">{product.sku}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900 whitespace-pre-line">{product.variant}</div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm font-medium text-gray-900">{product.price}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <Badge
+                        variant={product.status === "Active" ? "default" : "destructive"}
+                        className={
+                          product.status === "Active"
+                            ? "bg-green-100 text-green-800 hover:bg-green-200"
+                            : "bg-red-100 text-red-800 hover:bg-red-200"
+                        }
+                      >
+                        {product.status}
+                      </Badge>
+                    </td>
+                    <td className="px-6 py-4">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="w-8 h-8 text-gray-400 hover:text-gray-600">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuItem onClick={() => handleEditProduct(product)} className="cursor-pointer">
+                            <Edit className="w-4 h-4 mr-2" />
+                            Edit Product
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleDuplicateProduct(product)}
+                            className="cursor-pointer"
+                          >
+                            <Copy className="w-4 h-4 mr-2" />
+                            Duplicate Product
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => handleDeleteProduct(product)}
+                            className="cursor-pointer text-red-600 focus:text-red-600"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete Product
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                className="w-8 h-8 bg-transparent"
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-8 h-8 p-0 bg-transparent"
+                  onClick={() => setCurrentPage(1)}
+                >
+                  1
+                </Button>
+                <Button variant="default" size="sm" className="w-8 h-8 p-0 bg-blue-600 hover:bg-blue-700">
+                  2
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-8 h-8 p-0 bg-transparent"
+                  onClick={() => setCurrentPage(3)}
+                >
+                  3
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-8 h-8 p-0 bg-transparent"
+                  onClick={() => setCurrentPage(4)}
+                >
+                  4
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-8 h-8 p-0 bg-transparent"
+                  onClick={() => setCurrentPage(5)}
+                >
+                  5
+                </Button>
+                <span className="px-2 text-sm text-gray-500">...</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-8 h-8 p-0 bg-transparent"
+                  onClick={() => setCurrentPage(47)}
+                >
+                  47
+                </Button>
+              </div>
+
+              <Button
+                variant="outline"
+                size="icon"
+                className="w-8 h-8 bg-transparent"
+                onClick={() => setCurrentPage(currentPage + 1)}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <AddItem
+        isNewProductOpen={isNewProductOpen}
+        setIsNewProductOpen={setIsNewProductOpen}
+      />
+
+      <ItemDetails
+        isProductDetailsOpen={isProductDetailsOpen}
+        setIsProductDetailsOpen={setIsProductDetailsOpen}
+        selectedProduct={selectedProduct}
+      />
+    </>
+  )
+}
+
+export default ProductsPage
