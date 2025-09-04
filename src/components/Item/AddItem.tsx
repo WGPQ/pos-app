@@ -148,7 +148,7 @@ const AddItem: React.FC<AddItemProps> = ({ isNewProductOpen, setIsNewProductOpen
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="variantCount">Costo *</Label>
+                            <Label htmlFor="variantCount">Costo $ *</Label>
                             <Input
                                 id="variantCount"
                                 type="number"
@@ -162,7 +162,7 @@ const AddItem: React.FC<AddItemProps> = ({ isNewProductOpen, setIsNewProductOpen
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="price">Precio *</Label>
+                            <Label htmlFor="price">Precio $ *</Label>
                             <Input
                                 id="price"
                                 type="number"
@@ -213,7 +213,7 @@ const AddItem: React.FC<AddItemProps> = ({ isNewProductOpen, setIsNewProductOpen
                         <Button type="button" variant="outline" onClick={() => setIsNewProductOpen(false)}>
                             Cancelar
                         </Button>
-                        <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+                        <Button type="submit" className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white">
                             Guardar
                         </Button>
                     </DialogFooter>

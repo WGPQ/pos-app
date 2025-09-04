@@ -95,13 +95,13 @@ const ProductsPage = () => {
           </div>
 
           {/* Search and Actions */}
-          <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+          <div className="px-6 py-4 border-b border-purple-100 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-purple-400 w-4 h-4" />
                 <Input
                   placeholder="Buscar productos..."
-                  className="pl-10 w-80 h-9"
+                  className="pl-10 w-80 h-9 border-purple-200 focus:border-purple-400 focus:ring-purple-400"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -216,7 +216,7 @@ const ProductsPage = () => {
               </Button> */}
               <Button
                 size="sm"
-                className="h-9 bg-blue-600 hover:bg-blue-700"
+                className="h-9 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-lg"
                 onClick={() => setIsNewProductOpen(true)}
               >
                 <Plus className="w-4 h-4 mr-2" />
@@ -420,7 +420,7 @@ const ProductsPage = () => {
 
       <ItemDetails
         isProductDetailsOpen={isProductDetailsOpen}
-        setIsProductDetailsOpen={()=>{
+        setIsProductDetailsOpen={() => {
           setIsProductDetailsOpen(false);
           setSelectedProduct(null);
         }}

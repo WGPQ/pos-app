@@ -11,7 +11,7 @@ export default function AdminLayout({
 }) {
 
     return (
-        <div className="flex h-screen bg-gray-50">
+        <div className="flex h-screen bg-gradient-to-br from-purple-100 via-purple-50 to-indigo-100">
             <AppSidebar />
             <div className="flex-1 flex flex-col">
                 <AppHeader />

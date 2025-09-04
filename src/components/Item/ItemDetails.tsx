@@ -50,7 +50,7 @@ const ItemDetails:FC<ItemDetailsProps> = ({ isProductDetailsOpen, setIsProductDe
                                     </Badge>
                                 </div>
                                 <div>
-                                    <span className="text-2xl font-bold text-gray-900">$ {parseFloat(selectedProduct.price.toString()).toFixed(2)}</span>
+                                    <span className="text-2xl font-bold text-gray-900">${parseFloat(selectedProduct.price.toString()).toFixed(2)}</span>
                                 </div>
                             </div>
                         </div>
@@ -74,7 +74,7 @@ const ItemDetails:FC<ItemDetailsProps> = ({ isProductDetailsOpen, setIsProductDe
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-gray-500">Costo:</span>
-                                        <span className="text-gray-900 font-medium">{selectedProduct.cost.toString()}</span>
+                                        <span className="text-gray-900 font-medium">${parseFloat(selectedProduct.cost.toString()).toFixed(2)}</span>
                                     </div>
                                 </div>
                             </div>
