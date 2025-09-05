@@ -1,35 +1,56 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import {
   getProducts,
-  getProduct,
   createProduct,
   updateProduct,
   deleteProduct,
   Product,
 } from "@/services/productService";
+import { useProductStore } from "@/store/productStore";
 
 export function useProducts() {
-  const queryClient = useQueryClient();
+  const setProducts = useProductStore((state) => state.setProducts);
+  const setHasLoadData = useProductStore((state) => state.setHasLoadData);
+  const addProductStore = useProductStore((state) => state.addProduct);
+  const updateProductStore = useProductStore((state) => state.updateProduct);
+  const removeProductStore = useProductStore((state) => state.removeProduct);
+  const setLoadingProducts = useProductStore((state) => state.setLoadingProducts);
+
 
   const productsQuery = useQuery<Product[]>({
     queryKey: ["products"],
-    queryFn: getProducts,
+    queryFn: async () => {
+      setLoadingProducts(true);
+      const products = await getProducts();
+      const sortedProducts = [...products].sort((a, b) => {
+        const dateA = new Date(a.createdAt ?? 0).getTime();
+        const dateB = new Date(b.createdAt ?? 0).getTime();
+        return dateB - dateA;
+      });
+      setProducts(sortedProducts);
+      setLoadingProducts(false);
+      setHasLoadData(true);
+      return sortedProducts;
+    },
+    enabled: false,
   });
 
   const addProduct = useMutation({
     mutationFn: createProduct,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["products"] }),
+    onSuccess: (newProduct) => addProductStore(newProduct),
   });
 
   const editProduct = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<Product> }) =>
       updateProduct(id, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["products"] }),
+    onSuccess: (updatedProduct) => updateProductStore(updatedProduct),
   });
 
   const removeProduct = useMutation({
     mutationFn: deleteProduct,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["products"] }),
+    onSuccess: (_, id) => {
+      removeProductStore(id);
+    },
   });
 
   return { productsQuery, addProduct, editProduct, removeProduct };
