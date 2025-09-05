@@ -41,7 +41,6 @@ const PaginationItems: React.FC<PaginationItemsProps> = ({ currentPage, setCurre
   return (
     <div className="px-6 py-4 border-t border-purple-100 flex items-center justify-center">
       <div className="flex items-center gap-2">
-        {/* Botón anterior */}
         <Button
           variant="outline"
           size="icon"
@@ -52,7 +51,6 @@ const PaginationItems: React.FC<PaginationItemsProps> = ({ currentPage, setCurre
           <ChevronLeft className="w-4 h-4" />
         </Button>
 
-        {/* Primera página */}
         <Button
           variant="outline"
           size="sm"
@@ -62,10 +60,8 @@ const PaginationItems: React.FC<PaginationItemsProps> = ({ currentPage, setCurre
           1
         </Button>
 
-        {/* Puntos si es necesario */}
         {pageNumbers[0] > 2 && <span className="px-2 text-sm text-purple-400">...</span>}
 
-        {/* Rango dinámico de páginas */}
         {pageNumbers.map((page) => (
           <Button
             key={page}
@@ -78,12 +74,10 @@ const PaginationItems: React.FC<PaginationItemsProps> = ({ currentPage, setCurre
           </Button>
         ))}
 
-        {/* Puntos si es necesario */}
         {pageNumbers[pageNumbers.length - 1] < totalPages - 1 && (
           <span className="px-2 text-sm text-purple-400">...</span>
         )}
 
-        {/* Última página */}
         {totalPages > 1 && (
           <Button
             variant="outline"

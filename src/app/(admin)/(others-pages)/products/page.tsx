@@ -36,6 +36,7 @@ const ProductsPage = () => {
   const products = useProductStore((state) => state.products);
   const [currentPage, setCurrentPage] = useState(2)
   const [searchTerm, setSearchTerm] = useState("");
+  console.log({ productsList: products.length });
 
   const filteredProducts = useMemo(() => {
     return applyFilters(products, searchTerm.toLowerCase());
@@ -90,7 +91,7 @@ const ProductsPage = () => {
             <PaginationItems
               currentPage={currentPage}
               setCurrentPage={setCurrentPage}
-              totalPages={Math.ceil(filteredProducts.length / 10)}
+              totalPages={Math.ceil(filteredProducts.length / itemsPerPage)}
             />
           </div>
         </div>
