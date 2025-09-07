@@ -1,7 +1,9 @@
 "use client";
-import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-
+import React, { useCallback } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { usePathname } from "next/navigation";
+import { useSidebar } from "../context/SidebarContext";
 import {
   Grid3X3,
   ShoppingCart,
@@ -10,13 +12,11 @@ import {
   BarChart3,
   HomeIcon,
 } from "lucide-react";
-import Link from "next/link";
 
 type NavItem = {
   name: string;
   icon: React.ElementType | React.ReactElement;
-  path?: string;
-  subItems?: { name: string; path: string; pro?: boolean; new?: boolean }[];
+  path: string;
 };
 
 const navItems: NavItem[] = [
@@ -52,40 +52,109 @@ const navItems: NavItem[] = [
   },
 ];
 
-
 const AppSidebar: React.FC = () => {
-  return (
-    <div className="w-16 bg-gradient-to-b from-purple-600 to-purple-700 border-r border-purple-500/20 flex flex-col items-center py-4 shadow-lg">
-      <div className="mb-8">
-        <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-md">
-          <Grid3X3 className="w-5 h-5 text-purple-600" />
-        </div>
-      </div>
+  const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
+  const pathname = usePathname();
 
-      <nav className="flex flex-col gap-4">
-        {
-          navItems.map((item) => {
-            const Icon = item.icon as React.ElementType;
-            return (
-              <Tooltip key={item.name}>
-                <TooltipTrigger asChild>
-                  <Link href={item.path!} passHref>
-                    <Button variant="ghost" size="icon"
-                      className="w-10 h-10 text-purple-200 hover:text-white hover:bg-purple-500/30 transition-colors">
-                      <Icon className="w-5 h-5" />
-                    </Button>
-                  </Link>
-                </TooltipTrigger>
-                <TooltipContent side="right">
-                  <p>{item.name}</p>
-                </TooltipContent>
-              </Tooltip>
-            )
-          })
+  const renderMenuItems = (
+    navItems: NavItem[],
+  ) => (
+    <ul className="flex flex-col gap-4">
+      {navItems.map((nav) => {
+        const Icon = nav.icon as React.ElementType;
+        return (
+          <li key={nav.name}>
+            <Link
+              href={nav.path}
+              className={`menu-item group ${isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"
+                }`}
+            >
+              <span
+                className={`${isActive(nav.path)
+                  ? "menu-item-icon-active"
+                  : "menu-item-icon-inactive"
+                  }`}
+              >
+                <Icon />
+              </span>
+              {(isExpanded || isHovered || isMobileOpen) && (
+                <span className={`menu-item-text`}>{nav.name}</span>
+              )}
+            </Link>
+          </li>
+        )
+      })}
+    </ul>
+  );
+
+  const isActive = useCallback((path: string) => path === pathname, [pathname]);
+
+
+  return (
+    <aside
+      className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200
+        ${isExpanded || isMobileOpen
+          ? "w-[290px]"
+          : isHovered
+            ? "w-[290px]"
+            : "w-[90px]"
         }
-      </nav>
-    </div>
-  )
+        ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
+        lg:translate-x-0`}
+      onMouseEnter={() => !isExpanded && setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div
+        className={`py-8 flex  ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
+          }`}
+      >
+        <Link href="/">
+          {isExpanded || isHovered || isMobileOpen ? (
+            <>
+              <Image
+                className="dark:hidden"
+                src="/images/logo/logo.svg"
+                alt="Logo"
+                width={150}
+                height={40}
+              />
+              <Image
+                className="hidden dark:block"
+                src="/images/logo/logo-dark.svg"
+                alt="Logo"
+                width={150}
+                height={40}
+              />
+            </>
+          ) : (
+            <Image
+              src="/images/logo/logo-icon.svg"
+              alt="Logo"
+              width={32}
+              height={32}
+            />
+          )}
+        </Link>
+      </div>
+      <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
+        <nav className="mb-6">
+          <div className="flex flex-col gap-4">
+            <div>
+              <h2
+                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${!isExpanded && !isHovered
+                  ? "lg:justify-center"
+                  : "justify-start"
+                  }`}
+              >
+                Menu
+              </h2>
+              {renderMenuItems(navItems)}
+            </div>
+          </div>
+        </nav>
+      </div>
+    </aside>
+  );
 };
 
 export default AppSidebar;

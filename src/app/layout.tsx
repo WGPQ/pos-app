@@ -1,17 +1,12 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Outfit } from "next/font/google";
 import "./globals.css";
 import TooltipProvider from "@/context/TooltipProvider";
 import { ThemeProvider } from "@/context/ThemeProvider";
 import Providers from "@/context/QueryClientProvider";
+import { SidebarProvider } from "@/context/SidebarContext";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const outfit = Outfit({
   subsets: ["latin"],
 });
 
@@ -28,12 +23,14 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${outfit.className} dark:bg-gray-900`}
       >
         <ThemeProvider>
           <TooltipProvider>
             <Providers>
-              {children}
+              <SidebarProvider>
+                {children}
+              </SidebarProvider>
             </Providers>
           </TooltipProvider>
         </ThemeProvider>

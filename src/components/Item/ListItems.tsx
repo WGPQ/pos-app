@@ -1,17 +1,16 @@
 
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import {
-  MoreHorizontal,
   Edit,
   Trash2,
 } from "lucide-react"
+import Badge from '../ui/badge';
 import ItemDetails from "./ItemDetails";
 import DeleteItem from "./DeleteItem";
 import { useProductStore } from "@/store/productStore";
 import { Product } from "@/services/productService";
 import Image from 'next/image';
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '../ui/table';
+import { useState } from 'react';
 
 interface ListItemsProps {
   products: Product[];
@@ -42,115 +41,118 @@ const ListItems = ({ products }: ListItemsProps) => {
 
   return (
     <>
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-200">
-            <tr>
-              {/* <th className="px-6 py-3 text-left">
-                    <input type="checkbox" className="rounded border-gray-300" />
-                  </th> */}
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Producto
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                SKU
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Cantidad
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Costo
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Precio
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Estado
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {products.map((product) => (
-              <tr key={product.id} className="hover:bg-gray-50">
-                {/* <td className="px-6 py-4">
-                      <input type="checkbox" className="rounded border-gray-300" />
-                    </td> */}
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <Image
-                      alt={product.name}
-                      width={40}
-                      height={40}
-                      src={product.image || "/placeholder.svg"}
-                      className="w-10 h-10 rounded-lg object-cover"
-                    />
-                    <button
-                      onClick={() => openProductDetails(product)}
-                      className="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors text-left"
-                    >
-                      {product.name}
-                    </button>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <span className="text-sm text-gray-900">{product.sku}</span>
-                </td>
-                <td className="px-6 py-4">
-                  <span className="text-sm text-gray-900">{product.quantity}</span>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm text-gray-900 whitespace-pre-line">${parseFloat(product.cost.toString()).toFixed(2)}</div>
-                </td>
-                <td className="px-6 py-4">
-                  <span className="text-sm font-medium text-gray-900">${parseFloat(product.price.toString()).toFixed(2)}</span>
-                </td>
-                <td className="px-6 py-4">
-                  <Badge
-                    variant={product.in_store ? "default" : "destructive"}
-                    className={
-                      product.in_store
-                        ? "bg-green-100 text-green-800 hover:bg-green-200"
-                        : "bg-red-100 text-red-800 hover:bg-red-200"
-                    }
+      <div className="max-w-full overflow-x-auto">
+        <div className="min-w-[1102px]">
+          <div className="overflow-x-auto">
+            <Table className="table-fixed w-full border-collapse">
+              {/* Table Header */}
+              <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
+                <TableRow>
+                  <TableCell
+                    isHeader
+                    className="w-2/6 px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
-                    {product.in_store ? "En tienda" : "Agotado"}
-                  </Badge>
-                </td>
-                <td className="px-6 py-4">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="w-8 h-8 text-gray-400 hover:text-gray-600">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
-                      <DropdownMenuItem onClick={() => handleEditProduct(product)} className="cursor-pointer">
-                        <Edit className="w-4 h-4 mr-2" />
-                        Editar
-                      </DropdownMenuItem>
-                      {/* <DropdownMenuItem
-                            onClick={() => handleDuplicateProduct(product)}
-                            className="cursor-pointer"
-                          >
-                            <Copy className="w-4 h-4 mr-2" />
-                            Duplicate Product
-                          </DropdownMenuItem> */}
-                      {/* <DropdownMenuSeparator /> */}
-                      <DropdownMenuItem
-                        onClick={() => handleDeleteProduct(product)}
-                        className="cursor-pointer text-red-600 focus:text-red-600"
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Eliminar
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                    Producto
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="w-1/6 px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                  >
+                    SKU
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="w-1/6 px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                  >
+                    Cantidad
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="w-1/6 px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                  >
+                    Costo
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="w-1/6 px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                  >
+                    Precio
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="w-1/6 px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                  >
+                    Estado
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="w-1/8 px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                  >
+                    <span></span>
+                  </TableCell>
+                </TableRow>
+              </TableHeader>
+
+              {/* Table Body */}
+              <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+                {products.map((product) => (
+                  <TableRow key={product.id}>
+                    {/* Producto */}
+                    <TableCell className="px-2 py-4 sm:px-2 text-start w-2/6">
+                      <div className="flex items-center gap-3">
+                        <Image
+                          width={40}
+                          height={40}
+                          src={product.image || "/placeholder.svg"}
+                          alt={product.name}
+                          className="w-10 h-10 rounded-lg object-cover"
+                        />
+                        <button
+                          onClick={() => openProductDetails(product)}
+                          className="block font-medium text-gray-800 text-theme-sm dark:text-white/90 truncate">
+                          {product.name}
+                        </button>
+                      </div>
+                    </TableCell>
+
+                    {/* SKU */}
+                    <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400 w-1/6 truncate">
+                      {product.sku}
+                    </TableCell>
+
+                    {/* Cantidad */}
+                    <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400 w-1/6">
+                      {product.quantity}
+                    </TableCell>
+
+                    {/* Costo */}
+                    <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400 w-1/6">
+                      ${parseFloat(product.cost.toString()).toFixed(2)}
+                    </TableCell>
+
+                    {/* Precio */}
+                    <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400 w-1/6">
+                      ${parseFloat(product.price.toString()).toFixed(2)}
+                    </TableCell>
+
+                    {/* Proveedor */}
+                    <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400 w-1/6 truncate">
+                      <Badge size="sm" color={product.in_store ? "success" : "error"} > {product.in_store ? "En tienda" : "Agotado"} </Badge>
+                    </TableCell>
+                    <TableCell className="px-4 py-3  text-gray-500 text-center text-theme-sm dark:text-gray-400 w-1/8 truncate">
+                      <button onClick={() => handleEditProduct(product)} className="dropdown-toggle">
+                        <Edit className="text-gray-400 hover:text-purple-700 dark:hover:text-gray-300 mr-2" />
+                      </button>
+                      <button onClick={() => handleDeleteProduct(product)} className="dropdown-toggle">
+                        <Trash2 className="text-gray-400 hover:text-red-700 dark:hover:text-gray-300" />
+                      </button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
       </div>
       {showDetailsProduct && <ItemDetails />}
       {showDeleteProduct && <DeleteItem />}

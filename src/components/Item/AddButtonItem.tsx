@@ -1,10 +1,10 @@
 'use client'
 
 import { Plus } from "lucide-react";
-import { Button } from "../ui/button";
-import AddDialogItem from "./AddDialogItem";
 
 import { useProductStore } from "@/store/productStore";
+import Button from "../ui/button";
+import AddModalItem from "./AddModalItem";
 
 const AddButtonItem = () => {
   const showNewProduct = useProductStore((state) => state.showNewProduct);
@@ -21,10 +21,10 @@ const AddButtonItem = () => {
         className="h-9 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-lg"
         onClick={onOpenDialog}
       >
-        <Plus className="w-4 h-4 mr-2" />
-        Nuevo Producto
+        <Plus className="w-4 h-4 sm:mr-2" />
+        <span className="hidden sm:inline">Nuevo Producto</span>
       </Button>
-      {showNewProduct && <AddDialogItem />}
+      {showNewProduct && <AddModalItem />}
     </>
   );
 };
