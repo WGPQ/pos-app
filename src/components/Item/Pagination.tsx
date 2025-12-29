@@ -10,9 +10,11 @@ const Pagination: React.FC<PaginationProps> = ({
   totalPages,
   onPageChange,
 }) => {
+  const startPage = Math.max(1, Math.min(currentPage - 1, totalPages - 2));
+  const endPage = Math.min(totalPages, startPage + 2);
   const pagesAroundCurrent = Array.from(
-    { length: Math.min(2, totalPages) },
-    (_, i) => i + Math.max(currentPage - 1, 1)
+    { length: Math.max(endPage - startPage + 1, 0) },
+    (_, i) => i + startPage
   );
 
   return (
@@ -25,7 +27,7 @@ const Pagination: React.FC<PaginationProps> = ({
         <ChevronLeft className="w-4 h-4" />
       </button>
       <div className="flex items-center gap-2">
-        {currentPage > 3 && <span className="px-2">...</span>}
+        {startPage > 1 && <span className="px-2">...</span>}
         {pagesAroundCurrent.map((page) => (
           <button
             key={page}
@@ -38,7 +40,7 @@ const Pagination: React.FC<PaginationProps> = ({
             {page}
           </button>
         ))}
-        {currentPage < totalPages - 2 && <span className="px-2">...</span>}
+        {endPage < totalPages && <span className="px-2">...</span>}
       </div>
       <button
         onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}

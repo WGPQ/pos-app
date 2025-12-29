@@ -1,6 +1,6 @@
 import React from 'react'
 
-const UsersPage = () => {
+const ClientsPage = () => {
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
@@ -8,11 +8,11 @@ const UsersPage = () => {
           className="text-xl font-semibold text-gray-800 dark:text-white/90"
           x-text="pageName"
         >
-          {"Ventas"}
+          {"Clientes"}
         </h2>
       </div>
     </div>
   )
 }
 
-export default UsersPage
+export default ClientsPage

@@ -2,16 +2,24 @@ import { useProductStore } from '@/store/productStore'
 import Image from 'next/image'
 import { Modal } from '../ui/modal';
 import Badge from '../ui/badge';
+import Button from '../ui/button';
+import { Edit } from 'lucide-react';
 
 const ItemDetails = () => {
   const showDetailsProduct = useProductStore((state) => state.showDetailsProduct);
   const setShowDetailsProduct = useProductStore((state) => state.setShowDetailsProduct);
+  const setShowNewProduct = useProductStore((state) => state.setShowNewProduct);
   const selectedProduct = useProductStore((state) => state.selectedProduct);
   const setSelectedProduct = useProductStore((state) => state.setSelectedProduct);
 
   const onCloseDetails = () => {
     setShowDetailsProduct(false);
     setSelectedProduct(null);
+  }
+
+  const onEditProduct = () => {
+    setShowDetailsProduct(false);
+    setShowNewProduct(true);
   }
   return (
     <Modal isOpen={showDetailsProduct} onClose={onCloseDetails} className="max-w-[600px] m-4">
@@ -43,7 +51,7 @@ const ItemDetails = () => {
                   <h3 className="text-lg font-semibold text-gray-900">{selectedProduct.name}</h3>
                   <p className="text-sm text-gray-500">SKU: {selectedProduct.sku}</p>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex flex-wrap items-center gap-3">
                   {/* <Badge variant="outline" className="text-xs">
                                     {selectedProduct.category}
                                 </Badge> */}
@@ -53,6 +61,16 @@ const ItemDetails = () => {
                   >
                     {selectedProduct.in_store ? "En tienda" : "Agotado"}
                   </Badge>
+                  <Button
+                    size="sm"
+                    type="button"
+                    variant="outline"
+                    onClick={onEditProduct}
+                    startIcon={<Edit className="h-4 w-4" />}
+                    className="h-8"
+                  >
+                    Editar
+                  </Button>
                 </div>
                 <div>
                   <span className="text-2xl font-bold text-gray-900">${parseFloat(selectedProduct.price.toString()).toFixed(2)}</span>

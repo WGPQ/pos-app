@@ -1,20 +1,12 @@
 "use client"
 import React, { useEffect, useRef } from 'react'
-// import { Badge } from '@/components/ui/badge'
 interface SearchItemsProps {
-  searchTerm: string;
   setSearchTerm: (term: string) => void;
 }
 const SearchItems: React.FC<SearchItemsProps> = ({
-  searchTerm,
   setSearchTerm,
 }) => {
 
-  const hasActiveFilters = searchTerm
-
-  const clearAllFilters = () => {
-    setSearchTerm("")
-  }
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -64,14 +56,6 @@ const SearchItems: React.FC<SearchItemsProps> = ({
         <span> K </span>
       </button>
     </div>
-    //   {hasActiveFilters && (
-    //     <Badge variant="secondary" className="bg-gray-100 text-gray-700 hover:bg-gray-200">
-    //       {searchTerm && `Buscar: "${searchTerm}"`}
-    //       <button className="ml-2 text-gray-500 hover:text-gray-700" onClick={clearAllFilters}>
-    //         ×
-    //       </button>
-    //     </Badge>
-    //   )}
   )
 }
 

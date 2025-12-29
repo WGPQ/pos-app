@@ -88,7 +88,7 @@ const ListItems = ({ products }: ListItemsProps) => {
                     isHeader
                     className="w-1/8 px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
-                    <span></span>
+                    Acciones
                   </TableCell>
                 </TableRow>
               </TableHeader>
@@ -100,13 +100,20 @@ const ListItems = ({ products }: ListItemsProps) => {
                     {/* Producto */}
                     <TableCell className="px-2 py-4 sm:px-2 text-start w-2/6">
                       <div className="flex items-center gap-3">
-                        <Image
-                          width={40}
-                          height={40}
-                          src={product.image || "/placeholder.svg"}
-                          alt={product.name}
-                          className="w-10 h-10 rounded-lg object-cover"
-                        />
+                        <button
+                          type="button"
+                          onClick={() => openProductDetails(product)}
+                          className="flex items-center justify-center"
+                          aria-label={`Ver detalles de ${product.name}`}
+                        >
+                          <Image
+                            width={48}
+                            height={48}
+                            src={product.image || "/placeholder.svg"}
+                            alt={product.name}
+                            className="w-12 h-12 rounded-xl object-cover"
+                          />
+                        </button>
                         <button
                           onClick={() => openProductDetails(product)}
                           className="block font-medium text-gray-800 text-theme-sm dark:text-white/90 truncate">
@@ -141,10 +148,10 @@ const ListItems = ({ products }: ListItemsProps) => {
                     </TableCell>
                     <TableCell className="px-4 py-3  text-gray-500 text-center text-theme-sm dark:text-gray-400 w-1/8 truncate">
                       <button onClick={() => handleEditProduct(product)} className="dropdown-toggle">
-                        <Edit className="text-gray-400 hover:text-purple-700 dark:hover:text-gray-300 mr-2" />
+                        <Edit className="h-5 w-5 text-gray-400 hover:text-purple-700 dark:hover:text-gray-300 mr-2" />
                       </button>
                       <button onClick={() => handleDeleteProduct(product)} className="dropdown-toggle">
-                        <Trash2 className="text-gray-400 hover:text-red-700 dark:hover:text-gray-300" />
+                        <Trash2 className="h-5 w-5 text-gray-400 hover:text-red-700 dark:hover:text-gray-300" />
                       </button>
                     </TableCell>
                   </TableRow>

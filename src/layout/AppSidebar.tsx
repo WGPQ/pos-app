@@ -5,12 +5,11 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
 import {
-  Grid3X3,
-  ShoppingCart,
-  Tag,
+  Box,
   Users,
   BarChart3,
   HomeIcon,
+  ShoppingBag,
 } from "lucide-react";
 
 type NavItem = {
@@ -26,24 +25,19 @@ const navItems: NavItem[] = [
     path: "/",
   },
   {
-    icon: Grid3X3,
-    name: "Inventario",
+    icon: Box,
+    name: "Productos",
     path: "/products",
   },
   {
-    icon: ShoppingCart,
-    name: "Ordenes",
-    path: "/orders",
-  },
-  {
-    icon: Tag,
-    name: "Etiquetas",
-    path: "/tags",
+    icon: ShoppingBag,
+    name: "Ventas",
+    path: "/sales",
   },
   {
     icon: Users,
-    name: "Usuarios",
-    path: "/users",
+    name: "Clientes",
+    path: "/clients",
   },
   {
     icon: BarChart3,
