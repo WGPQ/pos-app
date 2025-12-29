@@ -8,14 +8,20 @@ import { Product } from "@/services/productService";
 interface NewModalSaleProps {
   open: boolean;
   onClose: () => void;
+  onSaleSuccess?: (receiptNumber: string) => void;
 }
 
-const NewModalSale = ({ open, onClose }: NewModalSaleProps) => {
+const NewModalSale = ({ open, onClose, onSaleSuccess }: NewModalSaleProps) => {
   const [itemsToCar, setItemsToCar] = useState<Product[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
 
 
   const removeFromCart = (id: number) => {
     setItemsToCar((prevItems) => prevItems.filter((item) => item.id !== id));
+  }
+
+  const clearCart = () => {
+    setItemsToCar([]);
   }
 
   const updateQuantity = (id: number, quantity: number) => {
@@ -39,6 +45,11 @@ const NewModalSale = ({ open, onClose }: NewModalSaleProps) => {
     });
   }
 
+  const handleSaleSuccess = (receiptNumber: string) => {
+    onClose();
+    onSaleSuccess?.(receiptNumber);
+  };
+
   return (
     <Modal
       isOpen={open}
@@ -52,17 +63,23 @@ const NewModalSale = ({ open, onClose }: NewModalSaleProps) => {
             <div className="flex items-center justify-between">
               <h1 className="text-2xl font-bold">Punto de Venta</h1>
               <div className="flex items-center gap-4">
-                <SearchItems setSearchTerm={() => { }} />
+                <SearchItems setSearchTerm={setSearchTerm} />
               </div>
             </div>
           </div>
 
           <div className="flex-1 overflow-auto p-4">
-            <ListItemsPos addToCart={addToCart} />
+            <ListItemsPos addToCart={addToCart} searchTerm={searchTerm} />
           </div>
         </main>
 
-        <SidebarPos itemsInCart={itemsToCar} removeFromCart={removeFromCart} updateQuantity={updateQuantity} />
+        <SidebarPos
+          itemsInCart={itemsToCar}
+          removeFromCart={removeFromCart}
+          updateQuantity={updateQuantity}
+          clearCart={clearCart}
+          onSaleSuccess={handleSaleSuccess}
+        />
       </div>
     </Modal>
   )

@@ -27,4 +27,41 @@ model Product {
   in_store    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  saleItems   SaleItem[]
+}
+
+model Client {
+  id        Int      @id @default(autoincrement())
+  ci        String   @unique
+  name      String
+  email     String?
+  phone     String?
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  sales     Sale[]
+}
+
+model Sale {
+  id            Int        @id @default(autoincrement())
+  receiptNumber String     @unique
+  total         Decimal    @db.Decimal(10,2)
+  status        String     @default("Completed")
+  createdAt     DateTime   @default(now())
+  clientId      Int?
+  client        Client?    @relation(fields: [clientId], references: [id])
+  items         SaleItem[]
+}
+
+model SaleItem {
+  id          Int      @id @default(autoincrement())
+  saleId      Int
+  productId   Int?
+  productName String
+  productSku  String
+  unitPrice   Decimal  @db.Decimal(10,2)
+  quantity    Int
+  subtotal    Decimal  @db.Decimal(10,2)
+  sale        Sale     @relation(fields: [saleId], references: [id])
+  product     Product? @relation(fields: [productId], references: [id])
 }

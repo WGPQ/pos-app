@@ -3,14 +3,13 @@ import {
   Edit,
   Trash2,
 } from "lucide-react"
-import Badge from '../ui/badge';
 import ItemDetails from "./ItemDetails";
 import DeleteItem from "./DeleteItem";
 import { useProductStore } from "@/store/productStore";
 import { Product } from "@/services/productService";
 import Image from 'next/image';
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '../ui/table';
-import { useState } from 'react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 
 interface ListItemsProps {
   products: Product[];
@@ -39,6 +38,15 @@ const ListItems = ({ products }: ListItemsProps) => {
     setShowDeleteProduct(true);
   }
 
+  const formatDate = (value?: string) => {
+    if (!value) return "—";
+    return new Date(value).toLocaleDateString("es-EC", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
   return (
     <>
       <div className="max-w-full overflow-x-auto">
@@ -50,43 +58,31 @@ const ListItems = ({ products }: ListItemsProps) => {
                 <TableRow>
                   <TableCell
                     isHeader
-                    className="w-2/6 px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                    className="w-3/6 px-5 py-3 text-base font-semibold text-gray-600 text-start"
                   >
                     Producto
                   </TableCell>
                   <TableCell
                     isHeader
-                    className="w-1/6 px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                    className="w-1/6 px-5 py-3 text-base font-semibold text-gray-600 text-start"
                   >
-                    SKU
+                    Fecha
                   </TableCell>
                   <TableCell
                     isHeader
-                    className="w-1/6 px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                  >
-                    Cantidad
-                  </TableCell>
-                  <TableCell
-                    isHeader
-                    className="w-1/6 px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                  >
-                    Costo
-                  </TableCell>
-                  <TableCell
-                    isHeader
-                    className="w-1/6 px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                  >
-                    Precio
-                  </TableCell>
-                  <TableCell
-                    isHeader
-                    className="w-1/6 px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                    className="w-1/6 px-5 py-3 text-base font-semibold text-gray-600 text-start"
                   >
                     Estado
                   </TableCell>
                   <TableCell
                     isHeader
-                    className="w-1/8 px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                    className="w-1/6 px-5 py-3 text-base font-semibold text-gray-600 text-start"
+                  >
+                    Precio
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="w-1/8 px-5 py-3 text-base font-semibold text-gray-600 text-start"
                   >
                     Acciones
                   </TableCell>
@@ -96,10 +92,9 @@ const ListItems = ({ products }: ListItemsProps) => {
               {/* Table Body */}
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
                 {products.map((product) => (
-                  <TableRow key={product.id}>
-                    {/* Producto */}
-                    <TableCell className="px-2 py-4 sm:px-2 text-start w-2/6">
-                      <div className="flex items-center gap-3">
+                  <TableRow key={product.id} className="hover:bg-gray-50/60">
+                    <TableCell className="px-5 py-4 text-start">
+                      <div className="flex items-center gap-4">
                         <button
                           type="button"
                           onClick={() => openProductDetails(product)}
@@ -107,52 +102,74 @@ const ListItems = ({ products }: ListItemsProps) => {
                           aria-label={`Ver detalles de ${product.name}`}
                         >
                           <Image
-                            width={48}
-                            height={48}
+                            width={56}
+                            height={56}
                             src={product.image || "/placeholder.svg"}
                             alt={product.name}
-                            className="w-12 h-12 rounded-xl object-cover"
+                            className="h-14 w-14 rounded-2xl object-cover"
                           />
                         </button>
-                        <button
-                          onClick={() => openProductDetails(product)}
-                          className="block font-medium text-gray-800 text-theme-sm dark:text-white/90 truncate">
-                          {product.name}
-                        </button>
+                        <div className="min-w-0">
+                          <button
+                            onClick={() => openProductDetails(product)}
+                            className="block truncate text-base font-semibold text-gray-900"
+                          >
+                            {product.name}
+                          </button>
+                          <p className="text-sm text-gray-500">
+                            {product.category || "General"} · SKU: {product.sku}
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            Stock: {product.quantity}
+                          </p>
+                        </div>
                       </div>
                     </TableCell>
-
-                    {/* SKU */}
-                    <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400 w-1/6 truncate">
-                      {product.sku}
+                    <TableCell className="px-5 py-4 text-start text-theme-sm text-gray-600">
+                      {formatDate(product.createdAt)}
                     </TableCell>
-
-                    {/* Cantidad */}
-                    <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400 w-1/6">
-                      {product.quantity}
+                    <TableCell className="px-5 py-4 text-start text-theme-sm text-gray-600">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`h-2.5 w-2.5 rounded-full ${
+                            product.in_store ? "bg-success-500" : "bg-error-500"
+                          }`}
+                        />
+                        <span>{product.in_store ? "En stock" : "Agotado"}</span>
+                      </div>
                     </TableCell>
-
-                    {/* Costo */}
-                    <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400 w-1/6">
-                      ${parseFloat(product.cost.toString()).toFixed(2)}
-                    </TableCell>
-
-                    {/* Precio */}
-                    <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400 w-1/6">
+                    <TableCell className="px-5 py-4 text-start text-base font-semibold text-gray-900">
                       ${parseFloat(product.price.toString()).toFixed(2)}
                     </TableCell>
-
-                    {/* Proveedor */}
-                    <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400 w-1/6 truncate">
-                      <Badge size="sm" color={product.in_store ? "success" : "error"} > {product.in_store ? "En tienda" : "Agotado"} </Badge>
-                    </TableCell>
-                    <TableCell className="px-4 py-3  text-gray-500 text-center text-theme-sm dark:text-gray-400 w-1/8 truncate">
-                      <button onClick={() => handleEditProduct(product)} className="dropdown-toggle">
-                        <Edit className="h-5 w-5 text-gray-400 hover:text-purple-700 dark:hover:text-gray-300 mr-2" />
-                      </button>
-                      <button onClick={() => handleDeleteProduct(product)} className="dropdown-toggle">
-                        <Trash2 className="h-5 w-5 text-gray-400 hover:text-red-700 dark:hover:text-gray-300" />
-                      </button>
+                    <TableCell className="px-5 py-4 text-center text-theme-sm text-gray-500">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            onClick={() => handleEditProduct(product)}
+                            className="dropdown-toggle"
+                            aria-label={`Editar ${product.name}`}
+                          >
+                            <Edit className="h-5 w-5 text-gray-400 hover:text-purple-700 dark:hover:text-gray-300 mr-2" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" sideOffset={6}>
+                          Editar
+                        </TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            onClick={() => handleDeleteProduct(product)}
+                            className="dropdown-toggle"
+                            aria-label={`Eliminar ${product.name}`}
+                          >
+                            <Trash2 className="h-5 w-5 text-gray-400 hover:text-red-700 dark:hover:text-gray-300" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" sideOffset={6}>
+                          Eliminar
+                        </TooltipContent>
+                      </Tooltip>
                     </TableCell>
                   </TableRow>
                 ))}

@@ -5,9 +5,11 @@ import { Plus } from "lucide-react";
 import Button from "../ui/button";
 import NewModalSale from "./NewModalSale";
 import { useState } from "react";
+import Snackbar from "../ui/snackbar";
 
 const AddButtonItem = () => {
   const [open, setopen] = useState(false);
+  const [toastOpen, setToastOpen] = useState(false);
 
   const onOpenDialog = () => {
     setopen(true);
@@ -16,6 +18,11 @@ const AddButtonItem = () => {
   const onCloseDialog = () => {
     setopen(false);
   }
+
+  const handleSaleSuccess = () => {
+    setopen(false);
+    setToastOpen(true);
+  };
 
   return (
     <>
@@ -27,7 +34,12 @@ const AddButtonItem = () => {
         <Plus className="w-4 h-4 sm:mr-2" />
         <span className="hidden sm:inline">Nueva Venta</span>
       </Button>
-      {open && <NewModalSale open={open} onClose={onCloseDialog} />}
+      {open && <NewModalSale open={open} onClose={onCloseDialog} onSaleSuccess={handleSaleSuccess} />}
+      <Snackbar
+        open={toastOpen}
+        message="Venta exitosa"
+        onClose={() => setToastOpen(false)}
+      />
     </>
   );
 };
