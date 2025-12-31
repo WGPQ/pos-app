@@ -3,15 +3,15 @@
 import Button from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Product } from '@/services/productService';
-import { Minus, Plus, ShoppingCart, Trash2, UserPlus } from 'lucide-react'
+import { Minus, Plus, ShoppingCart, Trash2, UserPlus, X } from 'lucide-react'
 import Image from 'next/image'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useSales } from '@/hooks/useSales';
 import { useProductStore } from '@/store/productStore';
 import { useClients } from '@/hooks/useClients';
 import { useClientStore } from '@/store/clientStore';
-import AddModalClient from '@/components/Client/AddModalClient';
 import { Client } from '@/services/clientService';
+import { cn } from '@/lib/utils';
 
 interface SidebarPosProps {
   itemsInCart: Product[];
@@ -19,6 +19,7 @@ interface SidebarPosProps {
   updateQuantity: (id: number, quantity: number) => void;
   clearCart: () => void;
   onSaleSuccess?: (receiptNumber: string) => void;
+  className?: string;
 }
 
 const SidebarPos: React.FC<SidebarPosProps> = ({
@@ -27,13 +28,13 @@ const SidebarPos: React.FC<SidebarPosProps> = ({
   updateQuantity,
   clearCart,
   onSaleSuccess,
+  className,
 }) => {
   const { createSale } = useSales();
   const updateProductStore = useProductStore((state) => state.updateProduct);
   const { clientsQuery } = useClients();
   const clients = useClientStore((state) => state.clients);
   const hasLoadClients = useClientStore((state) => state.hasLoadData);
-  const showNewClient = useClientStore((state) => state.showNewClient);
   const setShowNewClient = useClientStore((state) => state.setShowNewClient);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [statusType, setStatusType] = useState<"success" | "error" | null>(null);
@@ -145,7 +146,7 @@ const SidebarPos: React.FC<SidebarPosProps> = ({
   }
 
   return (
-    <div className="flex w-80 flex-col border-l bg-background">
+    <div className={cn("flex w-80 flex-col border-l bg-background", className)}>
       <div className="flex items-center justify-between border-b p-4">
         <h2 className="flex items-center text-lg font-semibold">
           <ShoppingCart className="mr-2 h-5 w-5" />
@@ -172,7 +173,7 @@ const SidebarPos: React.FC<SidebarPosProps> = ({
                 setIsDropdownOpen(false);
               }
             }}
-            className="h-4 w-4 rounded border-gray-300 accent-purple-600"
+            className="relative h-4 w-4 appearance-none rounded border-2 border-purple-300 bg-white transition-colors checked:border-purple-600 checked:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-200 checked:after:absolute checked:after:left-1/2 checked:after:top-1/2 checked:after:h-[6px] checked:after:w-[3px] checked:after:-translate-x-1/2 checked:after:-translate-y-[55%] checked:after:rotate-45 checked:after:border-r-2 checked:after:border-b-2 checked:after:border-white checked:after:content-['']"
           />
           Consumidor final (sin cliente)
         </label>
@@ -183,6 +184,7 @@ const SidebarPos: React.FC<SidebarPosProps> = ({
                 type="text"
                 placeholder="Buscar por CI o nombre..."
                 value={clientSearch}
+                className="pr-9"
                 onChange={(event) => {
                   setClientSearch(event.target.value);
                   setSelectedClient(null);
@@ -191,6 +193,17 @@ const SidebarPos: React.FC<SidebarPosProps> = ({
                 }}
                 onFocus={() => setIsDropdownOpen(true)}
               />
+              {clientSearch.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleClearClient}
+                  className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800"
+                  aria-label="Borrar búsqueda"
+                  title="Borrar"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
               {isDropdownOpen && (
                 <div className="absolute z-10 mt-2 w-full rounded-lg border border-gray-200 bg-white shadow-theme-lg dark:border-gray-800 dark:bg-gray-900">
                   <div className="max-h-56 overflow-auto py-1 text-sm">
@@ -325,7 +338,6 @@ const SidebarPos: React.FC<SidebarPosProps> = ({
           {createSale.isPending ? "Procesando..." : "Checkout"}
         </Button>
       </div>
-      {showNewClient && <AddModalClient />}
     </div>
   )
 }

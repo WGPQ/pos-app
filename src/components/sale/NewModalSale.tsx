@@ -2,8 +2,10 @@ import { Modal } from "../ui/modal";
 import ListItemsPos from "./pos/ListItemsPos";
 import SidebarPos from "./pos/SidebarPos";
 import SearchItems from "../Item/SearchItems";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Product } from "@/services/productService";
+import Button from "../ui/button";
+import { ShoppingCart } from "lucide-react";
 
 interface NewModalSaleProps {
   open: boolean;
@@ -14,6 +16,7 @@ interface NewModalSaleProps {
 const NewModalSale = ({ open, onClose, onSaleSuccess }: NewModalSaleProps) => {
   const [itemsToCar, setItemsToCar] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showCart, setShowCart] = useState(false);
 
 
   const removeFromCart = (id: number) => {
@@ -45,8 +48,19 @@ const NewModalSale = ({ open, onClose, onSaleSuccess }: NewModalSaleProps) => {
     });
   }
 
+  const itemCount = useMemo(
+    () => itemsToCar.reduce((total, item) => total + item.quantity, 0),
+    [itemsToCar]
+  );
+
+  const cartTotal = useMemo(
+    () => itemsToCar.reduce((total, item) => total + item.price * item.quantity, 0),
+    [itemsToCar]
+  );
+
   const handleSaleSuccess = (receiptNumber: string) => {
     onClose();
+    setShowCart(false);
     onSaleSuccess?.(receiptNumber);
   };
 
@@ -57,18 +71,18 @@ const NewModalSale = ({ open, onClose, onSaleSuccess }: NewModalSaleProps) => {
       isFullscreen={true}
       showCloseButton={true}
     >
-      <div className="flex  overflow-x-hidden overflow-y-auto bg-white dark:bg-gray-900 lg:p-10">
+      <div className="flex flex-col overflow-x-hidden overflow-y-auto bg-white dark:bg-gray-900 lg:flex-row lg:p-10">
         <main className="flex-1 flex flex-col h-[calc(100vh-5rem)] overflow-hidden">
           <div className="sticky top-0 z-10 bg-background p-4 border-b">
             <div className="flex items-center justify-between">
               <h1 className="text-2xl font-bold">Punto de Venta</h1>
               <div className="flex items-center gap-4">
-                <SearchItems setSearchTerm={setSearchTerm} />
+                <SearchItems setSearchTerm={setSearchTerm} value={searchTerm} />
               </div>
             </div>
           </div>
 
-          <div className="flex-1 overflow-auto p-4">
+          <div className="custom-scrollbar flex-1 overflow-auto p-4">
             <ListItemsPos addToCart={addToCart} searchTerm={searchTerm} />
           </div>
         </main>
@@ -79,8 +93,36 @@ const NewModalSale = ({ open, onClose, onSaleSuccess }: NewModalSaleProps) => {
           updateQuantity={updateQuantity}
           clearCart={clearCart}
           onSaleSuccess={handleSaleSuccess}
+          className="hidden lg:flex"
         />
       </div>
+      {!showCart && (
+        <div className="fixed bottom-4 left-4 right-4 z-40 lg:hidden">
+        <Button
+          size="md"
+          className="w-full justify-between bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-lg"
+          onClick={() => setShowCart(true)}
+        >
+          <span className="flex items-center gap-2">
+            <ShoppingCart className="h-4 w-4" />
+            Ver carrito
+          </span>
+          <span className="text-sm font-semibold">
+            {itemCount} · ${cartTotal.toFixed(2)}
+          </span>
+        </Button>
+      </div>
+      )}
+      <Modal isOpen={showCart} onClose={() => setShowCart(false)} className="max-w-[520px] m-4">
+        <SidebarPos
+          itemsInCart={itemsToCar}
+          removeFromCart={removeFromCart}
+          updateQuantity={updateQuantity}
+          clearCart={clearCart}
+          onSaleSuccess={handleSaleSuccess}
+          className="w-full border-l-0 rounded-3xl"
+        />
+      </Modal>
     </Modal>
   )
 }

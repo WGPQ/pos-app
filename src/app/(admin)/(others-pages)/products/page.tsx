@@ -96,14 +96,14 @@ const ProductsPage = () => {
       <div className="space-y-4">
         <ComponentCard
           header={
-            <div className="pt-2 flex items-center justify-between">
-              <SearchItems
-                setSearchTerm={setSearchTerm}
-              />
-              <div className="flex items-start gap-2">
-                <ExportItems items={products} />
-                <ImportItems items={products} />
-                <AddButtonItem />
+            <div className="pt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="w-full sm:max-w-[430px]">
+                <SearchItems setSearchTerm={setSearchTerm} value={searchTerm} />
+              </div>
+              <div className="grid w-full grid-cols-3 gap-2 sm:flex sm:w-auto sm:flex-nowrap sm:justify-end">
+                <ExportItems items={products} className="w-full sm:w-auto" />
+                <ImportItems items={products} className="w-full sm:w-auto" />
+                <AddButtonItem className="w-full sm:w-auto" />
               </div>
             </div>
           }

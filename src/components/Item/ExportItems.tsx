@@ -3,12 +3,14 @@
 import Button from '../ui/button'
 import { Download } from 'lucide-react'
 import { Product } from '@/services/productService'
+import { cn } from '@/lib/utils'
 
 interface ExportItemsProps {
   items: Product[]
+  className?: string
 }
 
-const ExportItems = ({ items }: ExportItemsProps) => {
+const ExportItems = ({ items, className }: ExportItemsProps) => {
   const handleExport = async () => {
     if (!items.length) return;
     const { utils, writeFile } = await import('xlsx');
@@ -45,12 +47,12 @@ const ExportItems = ({ items }: ExportItemsProps) => {
     <Button
       variant="outline"
       size="sm"
-      className="h-9 bg-transparent"
+      className={cn("h-9 bg-transparent", className)}
       onClick={handleExport}
       disabled={!items.length}
     >
-      <Download className="w-4 h-4 mr-2" />
-      Exportar
+      <Download className="w-4 h-4 sm:mr-2" />
+      <span className="hidden sm:inline">Exportar</span>
     </Button>
   )
 }

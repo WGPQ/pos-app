@@ -169,8 +169,8 @@ const AddModalItem = () => {
 
   return (
     <Modal isOpen={showNewProduct} onClose={onClose} className="max-w-[600px] m-4">
-      <div className="no-scrollbar relative w-full max-w-[600px] overflow-y-auto rounded-3xl bg-white p-4 dark:bg-gray-900 lg:p-11">
-        <div className="px-2 pr-14">
+      <div className="no-scrollbar relative w-full max-w-[600px] overflow-y-auto rounded-3xl bg-white p-4 dark:bg-gray-900 sm:p-6 lg:p-11">
+        <div className="px-2 pr-12 sm:pr-14">
           <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
             {selectedProduct ? "Editar Producto" : "Agregar Nuevo Producto"}
           </h4>
@@ -179,12 +179,12 @@ const AddModalItem = () => {
           </p>
         </div>
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
-          <div className="custom-scrollbar h-[450px] overflow-y-auto px-2 pb-3">
-            <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
+          <div className="custom-scrollbar max-h-[60vh] overflow-y-auto px-2 pb-3 sm:max-h-[450px]">
+            <div className="grid grid-cols-2 gap-4 md:gap-x-6 md:gap-y-5">
               <div className="col-span-2">
                 <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-4">
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-                    <div className="w-full sm:w-[200px]">
+                  <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
+                    <div className="w-full sm:w-[200px] sm:mx-0">
                       <div className="relative aspect-square w-full overflow-hidden rounded-2xl border border-gray-200 bg-white">
                         <Image
                           src={preview || "/placeholder.svg"}
@@ -220,7 +220,7 @@ const AddModalItem = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="flex-1 space-y-3">
+                    <div className="flex-1 space-y-3 text-left">
                       <div>
                         <p className="text-sm font-medium text-gray-900">
                           Imagen del producto
@@ -265,7 +265,7 @@ const AddModalItem = () => {
                         <button
                           type="button"
                           onClick={handlePickImage}
-                          className="text-xs font-medium text-brand-600 hover:text-brand-700"
+                          className="text-sm font-medium text-brand-600 hover:text-brand-700"
                         >
                           Seleccionar desde tu dispositivo
                         </button>
@@ -318,8 +318,8 @@ const AddModalItem = () => {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-3 px-2 mt-6 justify-end">
-            <Button size="sm" type='button' variant="outline" onClick={onClose}>
+          <div className="flex flex-col-reverse gap-3 px-2 mt-6 sm:flex-row sm:items-center sm:justify-end">
+            <Button size="sm" type='button' variant="outline" onClick={onClose} className="w-full sm:w-auto">
               Cancelar
             </Button>
             <Button size="sm" type='submit'
@@ -327,7 +327,7 @@ const AddModalItem = () => {
               startIcon={
                 <SaveIcon className='h-4 w-4' />
               }
-              className='bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-lg'>
+              className='w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-lg sm:w-auto'>
               Guardar
             </Button>
           </div>

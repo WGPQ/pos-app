@@ -3,10 +3,8 @@
 import { Plus } from "lucide-react";
 import { useClientStore } from "@/store/clientStore";
 import Button from "../ui/button";
-import AddModalClient from "./AddModalClient";
 
 const AddButtonClient = () => {
-  const showNewClient = useClientStore((state) => state.showNewClient);
   const setShowNewClient = useClientStore((state) => state.setShowNewClient);
 
   const onOpenDialog = () => {
@@ -23,7 +21,6 @@ const AddButtonClient = () => {
         <Plus className="w-4 h-4 sm:mr-2" />
         <span className="hidden sm:inline">Nuevo Cliente</span>
       </Button>
-      {showNewClient && <AddModalClient />}
     </>
   );
 };

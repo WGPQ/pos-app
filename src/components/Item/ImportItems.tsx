@@ -5,9 +5,11 @@ import Button from '../ui/button'
 import { Loader2, Upload } from 'lucide-react'
 import { Product } from '@/services/productService'
 import { useProducts } from '@/hooks/useProducts'
+import { cn } from '@/lib/utils'
 
 interface ImportItemsProps {
   items: Product[]
+  className?: string
 }
 
 type ImportStatus = {
@@ -73,7 +75,7 @@ const formatErrors = (errors: string[]) => {
   return `${errors.slice(0, 3).join(" | ")} | +${errors.length - 3} más`
 }
 
-const ImportItems = ({ items }: ImportItemsProps) => {
+const ImportItems = ({ items, className }: ImportItemsProps) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const { addProduct, editProduct } = useProducts()
   const [isImporting, setIsImporting] = useState(false)
@@ -264,23 +266,23 @@ const ImportItems = ({ items }: ImportItemsProps) => {
   }
 
   return (
-    <div className="flex flex-col items-end gap-1">
+    <div className="flex flex-col items-start gap-1">
       <Button
         variant="outline"
         size="sm"
-        className="h-9 bg-transparent"
+        className={cn("h-9 bg-transparent", className)}
         onClick={handlePickFile}
         disabled={isImporting}
       >
         {isImporting ? (
           <>
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            Importando
+            <Loader2 className="w-4 h-4 sm:mr-2 animate-spin" />
+            <span className="hidden sm:inline">Importando</span>
           </>
         ) : (
           <>
-            <Upload className="w-4 h-4 mr-2" />
-            Importar
+            <Upload className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Importar</span>
           </>
         )}
       </Button>

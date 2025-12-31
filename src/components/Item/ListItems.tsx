@@ -149,7 +149,7 @@ const ListItems = ({ products }: ListItemsProps) => {
                             className="dropdown-toggle"
                             aria-label={`Editar ${product.name}`}
                           >
-                            <Edit className="h-5 w-5 text-gray-400 hover:text-purple-700 dark:hover:text-gray-300 mr-2" />
+                            <Edit className="h-5 w-5 text-purple-600 hover:text-purple-700 mr-2" />
                           </button>
                         </TooltipTrigger>
                         <TooltipContent side="bottom" sideOffset={6}>
@@ -163,7 +163,7 @@ const ListItems = ({ products }: ListItemsProps) => {
                             className="dropdown-toggle"
                             aria-label={`Eliminar ${product.name}`}
                           >
-                            <Trash2 className="h-5 w-5 text-gray-400 hover:text-red-700 dark:hover:text-gray-300" />
+                            <Trash2 className="h-5 w-5 text-red-500 hover:text-red-600" />
                           </button>
                         </TooltipTrigger>
                         <TooltipContent side="bottom" sideOffset={6}>

@@ -38,14 +38,14 @@ const ListItemsPos = ({ addToCart, searchTerm }: ListItemsPosProps) => {
     : products;
 
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
       {filteredProducts.map((product) => (
         <Card
           key={product.id}
-          className="overflow-hidden transition-all duration-200 hover:scale-105 hover:shadow-md cursor-pointer group"
+          className="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-theme-sm transition-all duration-200 hover:shadow-theme-lg cursor-pointer group"
           onClick={() => addToCart(product)}
         >
-          <div className="relative aspect-square">
+          <div className="relative aspect-[4/3] sm:aspect-square">
             <div className="absolute left-2 top-2 z-10 rounded-full bg-white/90 px-2 py-1 text-xs font-semibold text-gray-700 shadow-theme-xs">
               Stock: {product.quantity}
             </div>
@@ -54,10 +54,10 @@ const ListItemsPos = ({ addToCart, searchTerm }: ListItemsPosProps) => {
             </div>
             <Image src={product.image || "/placeholder.svg"} alt={product.name} fill className="object-cover" />
           </div>
-          <CardContent className="p-3">
+          <CardContent className="p-4">
             <div>
-              <h3 className="font-medium line-clamp-1">{product.name}</h3>
-              <p className="text-sm text-muted-foreground">${product.price.toString()}</p>
+              <h3 className="text-base font-semibold text-gray-900 line-clamp-2">{product.name}</h3>
+              <p className="mt-1 text-sm text-gray-500">${product.price.toString()}</p>
             </div>
           </CardContent>
         </Card>
