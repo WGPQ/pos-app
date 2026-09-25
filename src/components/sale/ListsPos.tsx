@@ -11,7 +11,7 @@ import type { Sale } from "@/services/salesService";
 
 const ListsPos = () => {
   const { salesQuery } = useSales();
-  const sales = salesQuery.data ?? [];
+  const sales = salesQuery.data?.data ?? [];
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [showReceipt, setShowReceipt] = useState(false);
 
@@ -92,9 +92,9 @@ const ListsPos = () => {
                     <Badge
                       size="sm"
                       color={
-                        order.status === "Completed"
+                        order.status === "COMPLETED"
                           ? "success"
-                          : order.status === "Pending"
+                          : order.status === "PENDING"
                             ? "warning"
                             : "error"
                       }

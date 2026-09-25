@@ -3,11 +3,10 @@
 import Button from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Product } from '@/services/productService';
-import { Minus, Plus, ShoppingCart, Trash2, UserPlus, X } from 'lucide-react'
+import { Banknote, CreditCard, Landmark, Minus, Plus, ShoppingCart, Trash2, UserPlus, WalletCards, X } from 'lucide-react'
 import Image from 'next/image'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useSales } from '@/hooks/useSales';
-import { useProductStore } from '@/store/productStore';
 import { useClients } from '@/hooks/useClients';
 import { useClientStore } from '@/store/clientStore';
 import { Client } from '@/services/clientService';
@@ -31,7 +30,6 @@ const SidebarPos: React.FC<SidebarPosProps> = ({
   className,
 }) => {
   const { createSale } = useSales();
-  const updateProductStore = useProductStore((state) => state.updateProduct);
   const { clientsQuery } = useClients();
   const clients = useClientStore((state) => state.clients);
   const hasLoadClients = useClientStore((state) => state.hasLoadData);
@@ -41,12 +39,23 @@ const SidebarPos: React.FC<SidebarPosProps> = ({
   const [clientSearch, setClientSearch] = useState("");
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [clientError, setClientError] = useState<string | null>(null);
-  const [isFinalConsumer, setIsFinalConsumer] = useState(false);
+  const [isFinalConsumer, setIsFinalConsumer] = useState(true);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"CASH" | "CARD" | "BANK_TRANSFER" | "OTHER">("CASH");
+  const [amountReceived, setAmountReceived] = useState("");
+  const [taxRate, setTaxRate] = useState(0.12);
   const selectorRef = useRef<HTMLDivElement | null>(null);
   const latestClientIdRef = useRef<number | null>(null);
   const itemCount = itemsInCart ? itemsInCart.reduce((total, item) => total + item.quantity, 0) : 0;
   const cartTotal = itemsInCart ? itemsInCart.reduce((total, item) => total + item.price * item.quantity, 0) : 0;
+  const tax = cartTotal * taxRate;
+  const totalWithTax = cartTotal + tax;
+
+  useEffect(() => {
+    fetch("/api/settings").then((res) => res.ok ? res.json() : null).then((settings) => {
+      if (settings?.taxRate !== undefined) setTaxRate(Number(settings.taxRate));
+    }).catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     if (!hasLoadClients) {
@@ -124,11 +133,11 @@ const SidebarPos: React.FC<SidebarPosProps> = ({
         clientId: selectedClient?.id,
         isFinalConsumer,
         items: payload,
-      });
-      result.updatedProducts.forEach((product) => {
-        updateProductStore(product);
+        paymentMethod,
+        amountReceived: paymentMethod === "CASH" ? Number(amountReceived) : undefined,
       });
       clearCart();
+      setAmountReceived("");
       if (onSaleSuccess) {
         onSaleSuccess(result.sale.receiptNumber);
         return;
@@ -315,11 +324,31 @@ const SidebarPos: React.FC<SidebarPosProps> = ({
             <p>Subtotal</p>
             <p>${cartTotal.toFixed(2)}</p>
           </div>
+          <div className="flex justify-between text-sm text-gray-500">
+            <p>IVA ({(taxRate * 100).toFixed(0)}%)</p>
+            <p>${tax.toFixed(2)}</p>
+          </div>
           <div className="flex justify-between font-medium">
             <p>Total</p>
-            <p>${cartTotal.toFixed(2)}</p>
+            <p>${totalWithTax.toFixed(2)}</p>
           </div>
         </div>
+        <div className="mb-4 grid grid-cols-2 gap-2">
+          {[
+            ["CASH", "Efectivo", Banknote], ["CARD", "Tarjeta", CreditCard],
+            ["BANK_TRANSFER", "Transfer.", Landmark], ["OTHER", "Otro", WalletCards],
+          ].map(([value, label, Icon]) => {
+            const PaymentIcon = Icon as typeof Banknote;
+            return <button key={value as string} type="button" onClick={() => setPaymentMethod(value as typeof paymentMethod)} className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold ${paymentMethod === value ? "border-purple-600 bg-purple-50 text-purple-700" : "border-gray-200 text-gray-600"}`}><PaymentIcon className="h-4 w-4" />{label as string}</button>
+          })}
+        </div>
+        {paymentMethod === "CASH" && (
+          <div className="mb-4">
+            <label className="mb-1 block text-xs font-semibold text-gray-600">Efectivo recibido</label>
+            <Input type="number" min="0" step="0.01" inputMode="decimal" placeholder={totalWithTax.toFixed(2)} value={amountReceived} onChange={(event) => setAmountReceived(event.target.value)} />
+            {amountReceived && Number(amountReceived) >= totalWithTax && <p className="mt-1 text-xs font-medium text-emerald-600">Cambio: ${(Number(amountReceived) - totalWithTax).toFixed(2)}</p>}
+          </div>
+        )}
         {statusMessage && (
           <p
             className={`mb-3 text-xs ${
@@ -332,10 +361,10 @@ const SidebarPos: React.FC<SidebarPosProps> = ({
         <Button
           className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-lg"
           size="md"
-          disabled={itemsInCart.length === 0 || createSale.isPending || (!isFinalConsumer && !selectedClient)}
+          disabled={itemsInCart.length === 0 || createSale.isPending || (!isFinalConsumer && !selectedClient) || (paymentMethod === "CASH" && (!amountReceived || Number(amountReceived) < totalWithTax))}
           onClick={handleCheckout}
         >
-          {createSale.isPending ? "Procesando..." : "Checkout"}
+          {createSale.isPending ? "Procesando..." : `Cobrar $${totalWithTax.toFixed(2)}`}
         </Button>
       </div>
     </div>

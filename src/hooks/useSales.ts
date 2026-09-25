@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { cancelSale, createSale, getSales, Sale } from "@/services/salesService";
+import { cancelSale, createSale, getSales, SalesResponse } from "@/services/salesService";
 
 export function useSales() {
   const queryClient = useQueryClient();
 
-  const salesQuery = useQuery<Sale[]>({
+  const salesQuery = useQuery<SalesResponse>({
     queryKey: ["sales"],
     queryFn: getSales,
   });

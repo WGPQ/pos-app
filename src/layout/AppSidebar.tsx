@@ -8,6 +8,8 @@ import {
   Box,
   Users,
   BarChart3,
+  Calculator,
+  CircleDollarSign,
   HomeIcon,
   ShoppingBag,
 } from "lucide-react";
@@ -20,13 +22,18 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   {
+    icon: Calculator,
+    name: "Punto de venta",
+    path: "/sales",
+  },
+  {
     icon: HomeIcon,
     name: "Inicio",
     path: "/",
   },
   {
     icon: Box,
-    name: "Productos",
+    name: "Inventario",
     path: "/products",
   },
   {
@@ -43,6 +50,11 @@ const navItems: NavItem[] = [
     icon: BarChart3,
     name: "Reportes",
     path: "/reports",
+  },
+  {
+    icon: CircleDollarSign,
+    name: "Caja registradora",
+    path: "/cash-register",
   },
 ];
 

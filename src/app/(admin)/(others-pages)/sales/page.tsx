@@ -1,39 +1,41 @@
-import ComponentCard from '@/components/common/ComponentCard'
-import AddButtonSale from '@/components/sale/AddButtonSale'
-import ListsPos from '@/components/sale/ListsPos'
+"use client";
 
-const SalesPage = () => {
-  return (
-    <div>
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-        <h2
-          className="text-xl font-semibold text-gray-800 dark:text-white/90"
-          x-text="pageName"
-        >
-          {"Ventas"}
-        </h2>
-      </div>
-      <div className="space-y-4">
-        <ComponentCard
-          header={
-            <div className="pt-2 flex items-center justify-end">
-              <div className="flex items-center gap-2">
-                <AddButtonSale />
-              </div>
-            </div>
-          }
-        >
-          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-            <div className="max-w-full overflow-x-auto">
-              <div className="min-w-[1102px]">
-                <ListsPos />
-              </div>
-            </div>
-          </div>
-        </ComponentCard>
-      </div>
-    </div>
-  )
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Banknote, Barcode, CreditCard, Landmark, Minus, Plus, Search, ShoppingCart, Trash2, UserRound, X } from "lucide-react";
+import Image from "next/image";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { getProduct, getProductsPage, Product } from "@/services/productService";
+import { createSale } from "@/services/salesService";
+import { useRouter, useSearchParams } from "next/navigation";
+
+type CartLine = Product & { cartQuantity: number };
+type Payment = "CASH" | "CARD" | "BANK_TRANSFER" | "OTHER";
+const currency = (value: number) => new Intl.NumberFormat("es-EC", { style: "currency", currency: "USD" }).format(value);
+
+function SalesTerminal() {
+  const [search, setSearch] = useState(""); const [term, setTerm] = useState(""); const [category, setCategory] = useState(""); const [cart, setCart] = useState<CartLine[]>([]); const [payment, setPayment] = useState<Payment>("CASH"); const [amountReceived, setAmountReceived] = useState(""); const [taxRate, setTaxRate] = useState(.12); const [message, setMessage] = useState<string | null>(null); const [cartOpen, setCartOpen] = useState(false); const inputRef = useRef<HTMLInputElement>(null); const queryClient = useQueryClient(); const searchParams = useSearchParams(); const router = useRouter(); const productId = Number(searchParams.get("product"));
+  useEffect(() => { inputRef.current?.focus(); }, []);
+  useEffect(() => { const timeout = setTimeout(() => setTerm(search), 220); return () => clearTimeout(timeout); }, [search]);
+  useEffect(() => { fetch("/api/settings").then((res) => res.ok ? res.json() : null).then((data) => data && setTaxRate(Number(data.taxRate))).catch(() => undefined); }, []);
+  const products = useQuery({ queryKey: ["pos-products", term, category], queryFn: () => getProductsPage({ search: term, category, page: 1, pageSize: 32 }), placeholderData: (old) => old });
+  const selectedProduct = useQuery({ queryKey: ["pos-product", productId], queryFn: () => getProduct(productId), enabled: Number.isInteger(productId) && productId > 0 });
+  const subtotal = useMemo(() => cart.reduce((sum, item) => sum + Number(item.price) * item.cartQuantity, 0), [cart]); const tax = subtotal * taxRate; const total = subtotal + tax; const count = cart.reduce((sum, item) => sum + item.cartQuantity, 0);
+  const checkout = useMutation({ mutationFn: () => createSale({ isFinalConsumer: true, items: cart.map((item) => ({ productId: item.id, quantity: item.cartQuantity })), paymentMethod: payment, amountReceived: payment === "CASH" ? Number(amountReceived || total) : undefined }), onSuccess: (result) => { setMessage(`Venta ${result.sale.receiptNumber} completada.`); setCart([]); setAmountReceived(""); queryClient.invalidateQueries({ queryKey: ["pos-products"] }); queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] }); inputRef.current?.focus(); }, onError: (error) => setMessage(error instanceof Error ? error.message : "No se pudo completar la venta.") });
+  const add = (product: Product) => { if (product.quantity <= 0) return; setCart((items) => { const existing = items.find((item) => item.id === product.id); if (existing) return items.map((item) => item.id === product.id ? { ...item, cartQuantity: Math.min(item.cartQuantity + 1, item.quantity) } : item); return [...items, { ...product, cartQuantity: 1 }]; }); };
+  const changeQuantity = (id: number, value: number) => setCart((items) => items.flatMap((item) => item.id !== id ? [item] : value <= 0 ? [] : [{ ...item, cartQuantity: Math.min(value, item.quantity) }]));
+  useEffect(() => { if (!selectedProduct.data) return; add(selectedProduct.data); router.replace("/sales"); }, [selectedProduct.data]);
+  const methods: Array<[Payment, string, typeof Banknote]> = [["CASH", "Efectivo", Banknote], ["CARD", "Tarjeta", CreditCard], ["BANK_TRANSFER", "Transfer.", Landmark]];
+  return <div className="min-h-[calc(100vh-6rem)] rounded-2xl bg-[#f7f8fc] p-3 lg:p-4"><div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+    <main className="min-w-0"><section className="rounded-2xl border border-slate-100 bg-white p-3 shadow-theme-sm"><div className="flex flex-col gap-3 lg:flex-row"><label className="relative flex-1"><Barcode className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" /><input ref={inputRef} value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Escanear código de barras o buscar producto…" className="h-12 w-full rounded-xl bg-slate-100 pl-12 pr-4 text-sm outline-none ring-purple-200 focus:ring-4" /></label><button type="button" className="rounded-xl bg-violet-50 px-4 text-sm font-semibold text-violet-700"><Search className="mr-2 inline h-4 w-4" />Filtrar</button></div><div className="mt-3 flex gap-2 overflow-x-auto pb-1">{[["", "Todos"], ["papelería", "Papelería"], ["oficina", "Oficina"], ["escolar", "Escolar"]].map(([value, label]) => <button key={value} onClick={() => setCategory(value)} className={`whitespace-nowrap rounded-lg px-4 py-2 text-sm font-semibold ${category === value ? "bg-purple-700 text-white" : "bg-slate-100 text-slate-600"}`}>{label}{value === "" && products.data ? <span className="ml-2 rounded bg-white/20 px-1.5 py-0.5 text-xs">{products.data.pagination.total}</span> : null}</button>)}</div></section>
+      <section className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">{products.isLoading ? Array.from({ length: 8 }).map((_, index) => <div key={index} className="h-64 animate-pulse rounded-2xl bg-white" />) : products.data?.data.map((product) => { const out = product.quantity <= 0; const low = !out && product.quantity <= (product.minStock ?? 5); return <button key={product.id} onClick={() => add(product)} disabled={out} className={`group overflow-hidden rounded-2xl border bg-white text-left shadow-theme-sm transition ${out ? "cursor-not-allowed opacity-45" : "hover:-translate-y-0.5 hover:border-purple-300 hover:shadow-theme-md"}`}><div className="relative aspect-[4/3] bg-slate-100"><Image src={product.image || "/placeholder.svg"} alt={product.name} fill sizes="(max-width: 640px) 50vw, 220px" className="object-cover" /><span className="absolute left-2 top-2 rounded-md bg-white/95 px-2 py-1 text-[10px] font-bold text-slate-700">SKU: {product.sku}</span>{out && <span className="absolute inset-0 flex items-center justify-center bg-white/65 font-bold text-red-600">AGOTADO</span>}</div><div className="p-3"><h2 className="truncate font-bold text-slate-900">{product.name}</h2><p className="mt-1 truncate text-xs text-slate-500">{product.category}</p><div className="mt-3 flex items-end justify-between"><div><p className="text-[11px] text-slate-400">Precio unitario</p><p className="text-xl font-bold text-purple-700">{currency(Number(product.price))}</p></div><span className={`rounded-lg px-2 py-1 text-xs font-semibold ${low ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700"}`}>• Stock: {product.quantity}</span></div></div></button> })}</section>
+      <footer className="mt-4 flex flex-wrap items-center gap-4 rounded-xl bg-violet-50 px-4 py-3 text-xs text-slate-600"><span><kbd className="rounded bg-white px-2 py-1 font-bold">F4</kbd> Buscar cliente</span><span><kbd className="rounded bg-white px-2 py-1 font-bold">ESC</kbd> Limpiar búsqueda</span><span className="ml-auto font-semibold text-purple-700">Terminal lista</span></footer>
+    </main>
+    {cartOpen && <button aria-label="Cerrar carrito" onClick={() => setCartOpen(false)} className="fixed inset-0 z-30 bg-slate-950/30 xl:hidden" />}
+    <button onClick={() => setCartOpen(true)} className="fixed inset-x-3 bottom-[82px] z-20 flex items-center justify-between rounded-2xl bg-white px-4 py-3 shadow-xl xl:hidden"><span className="text-xs font-semibold text-slate-500">{count} artículos</span><span className="text-xl font-extrabold text-purple-700">Total: {currency(total)}</span><span className="rounded-xl bg-purple-700 px-3 py-2 text-sm font-bold text-white">Cobrar</span></button>
+    <aside className={`z-40 min-h-[520px] flex-col rounded-2xl border border-slate-100 bg-white p-4 text-[#101828] shadow-theme-md ${cartOpen ? "fixed inset-x-3 bottom-[82px] top-12 flex max-h-[calc(100vh-100px)]" : "hidden"} xl:sticky xl:top-20 xl:flex xl:h-[calc(100vh-7rem)]`}><div className="flex items-start justify-between border-b border-slate-100 pb-3"><div><h1 className="text-lg font-bold text-[#101828]">Venta actual</h1><p className="text-xs font-medium text-[#475467]">Cajera: Elizabeth Oña</p></div><div className="flex gap-3"><button onClick={() => setCartOpen(false)} className="text-xs font-semibold text-[#475467] xl:hidden">Cerrar</button><button onClick={() => setCart([])} className="text-xs font-semibold text-[#475467] hover:text-red-600">Vaciar</button></div></div><div className="mt-3 flex items-center gap-2 rounded-xl bg-violet-50 p-3"><span className="rounded-lg bg-violet-200 p-2 text-violet-700"><UserRound className="h-4 w-4" /></span><div><p className="text-sm font-bold text-[#101828]">Consumidor Final</p><p className="text-xs font-medium text-[#475467]">Cliente predeterminado</p></div></div><div className="mt-3 flex-1 space-y-2 overflow-y-auto">{cart.length ? cart.map((item) => <div key={item.id} className="rounded-xl border border-slate-100 bg-[#f1f5ff] p-3 text-[#101828]"><div className="flex justify-between gap-2"><div className="min-w-0"><p className="truncate text-sm font-extrabold text-[#101828]">{item.name}</p><p className="text-xs font-semibold text-[#475467]">{currency(Number(item.price))} / ud</p></div><button onClick={() => changeQuantity(item.id, 0)} aria-label={`Quitar ${item.name}`}><X className="h-4 w-4 text-[#667085] hover:text-red-600" /></button></div><div className="mt-2 flex items-center justify-between"><div className="flex items-center rounded-lg border border-slate-200 bg-white text-[#101828]"><button onClick={() => changeQuantity(item.id, item.cartQuantity - 1)} className="p-2"><Minus className="h-3 w-3" /></button><span className="w-7 text-center text-sm font-extrabold">{item.cartQuantity}</span><button onClick={() => changeQuantity(item.id, item.cartQuantity + 1)} className="p-2"><Plus className="h-3 w-3" /></button></div><b className="text-sm font-extrabold text-[#101828]">{currency(Number(item.price) * item.cartQuantity)}</b></div></div>) : <div className="flex h-52 flex-col items-center justify-center text-center text-slate-400"><ShoppingCart className="mb-3 h-9 w-9" /><p className="text-sm">Agrega productos para comenzar.</p></div>}</div><div className="border-t border-slate-100 pt-3"><p className="mb-2 text-xs font-bold uppercase tracking-wide text-[#475467]">Forma de pago rápida</p><div className="grid grid-cols-3 gap-2">{methods.map(([value, label, Icon]) => <button key={value} onClick={() => setPayment(value)} className={`rounded-xl px-2 py-3 text-xs font-bold ${payment === value ? "bg-purple-700 text-white" : "bg-violet-50 text-violet-700"}`}><Icon className="mx-auto mb-1 h-4 w-4" />{label}</button>)}</div>{payment === "CASH" && <input type="number" min="0" step="0.01" value={amountReceived} onChange={(event) => setAmountReceived(event.target.value)} placeholder={`Efectivo recibido (${total.toFixed(2)})`} className="mt-3 h-10 w-full rounded-lg border border-slate-200 px-3 text-sm font-medium text-[#101828] outline-none focus:border-purple-400" />}<div className="mt-3 space-y-1 text-sm font-medium text-[#344054]"><p className="flex justify-between"><span>Subtotal ({count} artículos)</span><b className="text-[#101828]">{currency(subtotal)}</b></p><p className="flex justify-between"><span>IVA ({(taxRate * 100).toFixed(0)}%)</span><b className="text-[#101828]">{currency(tax)}</b></p><div className="mt-2 flex items-end justify-between rounded-xl bg-violet-50 p-3"><span className="text-xs font-bold uppercase text-[#475467]">Total a cobrar</span><strong className="text-3xl text-purple-700">{currency(total)}</strong></div></div>{message && <p className={`mt-2 text-xs font-semibold ${message.includes("completada") ? "text-emerald-600" : "text-red-600"}`}>{message}</p>}<button disabled={!cart.length || checkout.isPending || (payment === "CASH" && amountReceived !== "" && Number(amountReceived) < total)} onClick={() => checkout.mutate()} className="mt-3 flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-purple-700 to-violet-600 px-4 py-3 text-lg font-bold text-white shadow-lg disabled:cursor-not-allowed disabled:opacity-50"><ShoppingCart className="mr-2 h-5 w-5" />{checkout.isPending ? "Procesando…" : `Cobrar ${currency(total)}`}</button></div></aside>
+  </div></div>;
 }
 
-export default SalesPage
+export default function SalesPage() {
+  return <Suspense fallback={<div className="min-h-[500px] animate-pulse rounded-2xl bg-slate-100" />}><SalesTerminal /></Suspense>;
+}

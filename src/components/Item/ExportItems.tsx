@@ -2,20 +2,22 @@
 
 import Button from '../ui/button'
 import { Download } from 'lucide-react'
-import { Product } from '@/services/productService'
+import { getProductsForExport, Product } from '@/services/productService'
 import { cn } from '@/lib/utils'
 
 interface ExportItemsProps {
-  items: Product[]
+  items?: Product[]
   className?: string
+  filters?: { search?: string; category?: string; stockStatus?: string }
 }
 
-const ExportItems = ({ items, className }: ExportItemsProps) => {
+const ExportItems = ({ items, className, filters }: ExportItemsProps) => {
   const handleExport = async () => {
-    if (!items.length) return;
+    const products = items ?? await getProductsForExport(filters);
+    if (!products.length) return;
     const { utils, writeFile } = await import('xlsx');
 
-    const rows = items.map((item) => ({
+    const rows = products.map((item) => ({
       ID: item.id,
       Producto: item.name,
       SKU: item.sku,
@@ -49,7 +51,7 @@ const ExportItems = ({ items, className }: ExportItemsProps) => {
       size="sm"
       className={cn("h-9 bg-transparent", className)}
       onClick={handleExport}
-      disabled={!items.length}
+      disabled={Boolean(items && !items.length)}
     >
       <Download className="w-4 h-4 sm:mr-2" />
       <span className="hidden sm:inline">Exportar</span>

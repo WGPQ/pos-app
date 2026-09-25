@@ -5,7 +5,6 @@ import { Modal } from '../ui/modal'
 import Badge from '../ui/badge'
 import Button from '../ui/button'
 import { useSales } from '@/hooks/useSales'
-import { useProductStore } from '@/store/productStore'
 import type { Sale } from '@/services/salesService'
 
 interface ReceiptModalProps {
@@ -16,7 +15,6 @@ interface ReceiptModalProps {
 
 const ReceiptModal = ({ sale, open, onClose }: ReceiptModalProps) => {
   const { cancelSale } = useSales()
-  const updateProductStore = useProductStore((state) => state.updateProduct)
   const [currentSale, setCurrentSale] = useState<Sale>(sale)
   const [message, setMessage] = useState<string | null>(null)
 
@@ -30,15 +28,17 @@ const ReceiptModal = ({ sale, open, onClose }: ReceiptModalProps) => {
   }, [currentSale.items])
 
   const handleCancel = async () => {
-    if (currentSale.status === "Cancelled" || cancelSale.isPending) return
+    if (currentSale.status === "CANCELLED" || cancelSale.isPending) return
     const confirmed = window.confirm("¿Deseas anular este recibo y devolver el stock?")
     if (!confirmed) return
+    const reason = window.prompt("Indica el motivo de la anulación:")?.trim()
+    if (!reason) {
+      setMessage("Debes indicar un motivo para anular la venta.")
+      return
+    }
 
     try {
-      const result = await cancelSale.mutateAsync(currentSale.id)
-      result.updatedProducts.forEach((product) => {
-        updateProductStore(product)
-      })
+      const result = await cancelSale.mutateAsync({ id: currentSale.id, reason })
       setCurrentSale(result.sale)
       setMessage("Recibo anulado y stock devuelto.")
     } catch (error) {
@@ -69,8 +69,8 @@ const ReceiptModal = ({ sale, open, onClose }: ReceiptModalProps) => {
             </div>
           </div>
           <div className="flex flex-col items-start gap-2 text-left lg:items-end lg:text-right">
-            <Badge size="sm" color={currentSale.status === "Completed" ? "success" : "error"}>
-              {currentSale.status === "Completed" ? "Entregado" : "Anulado"}
+            <Badge size="sm" color={currentSale.status === "COMPLETED" ? "success" : "error"}>
+              {currentSale.status === "COMPLETED" ? "Entregado" : "Anulado"}
             </Badge>
             <p className="text-2xl font-semibold text-gray-900">#{currentSale.receiptNumber}</p>
             <p className="text-sm text-gray-500">
@@ -140,7 +140,7 @@ const ReceiptModal = ({ sale, open, onClose }: ReceiptModalProps) => {
             </div>
             <div className="flex items-center justify-between">
               <span>IVA</span>
-              <span className="font-medium">$0.00</span>
+              <span className="font-medium">${Number(currentSale.tax ?? 0).toFixed(2)}</span>
             </div>
             <div className="flex items-center justify-between text-base font-semibold text-gray-900">
               <span>Total</span>
@@ -157,10 +157,10 @@ const ReceiptModal = ({ sale, open, onClose }: ReceiptModalProps) => {
             size="sm"
             type="button"
             onClick={handleCancel}
-            disabled={currentSale.status === "Cancelled" || cancelSale.isPending}
+            disabled={currentSale.status === "CANCELLED" || cancelSale.isPending}
             className="bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg hover:from-red-600 hover:to-red-700"
           >
-            {currentSale.status === "Cancelled" ? "Recibo anulado" : "Anular recibo"}
+            {currentSale.status === "CANCELLED" ? "Recibo anulado" : "Anular recibo"}
           </Button>
         </div>
       </div>

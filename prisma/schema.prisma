@@ -22,12 +22,16 @@ model Product {
   category    String
   sku         String   @unique
   quantity    Int      @default(0)
+  minStock    Int      @default(5)
   price       Decimal  @db.Decimal(10,2)   
   cost        Decimal  @db.Decimal(10,2)   
   in_store    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   saleItems   SaleItem[]
+
+  @@index([category])
+  @@index([quantity])
 }
 
 model Client {
@@ -45,12 +49,30 @@ model Client {
 model Sale {
   id            Int        @id @default(autoincrement())
   receiptNumber String     @unique
+  subtotal      Decimal    @default(0) @db.Decimal(10,2)
+  discount      Decimal    @default(0) @db.Decimal(10,2)
+  tax           Decimal    @default(0) @db.Decimal(10,2)
   total         Decimal    @db.Decimal(10,2)
-  status        String     @default("Completed")
+  paymentMethod String     @default("CASH")
+  amountReceived Decimal?  @db.Decimal(10,2)
+  change        Decimal    @default(0) @db.Decimal(10,2)
+  status        String     @default("COMPLETED")
+  cashierName   String     @default("Elizabeth Oña")
+  cashSessionId Int?
+  cancellationReason String?
+  cancelledAt   DateTime?
+  cancelledBy   String?
   createdAt     DateTime   @default(now())
   clientId      Int?
   client        Client?    @relation(fields: [clientId], references: [id])
+  cashSession   CashSession? @relation(fields: [cashSessionId], references: [id])
   items         SaleItem[]
+
+  @@index([createdAt])
+  @@index([status])
+  @@index([clientId])
+  @@index([paymentMethod])
+  @@index([cashSessionId])
 }
 
 model SaleItem {
@@ -64,4 +86,27 @@ model SaleItem {
   subtotal    Decimal  @db.Decimal(10,2)
   sale        Sale     @relation(fields: [saleId], references: [id])
   product     Product? @relation(fields: [productId], references: [id])
+}
+
+model CashSession {
+  id             Int       @id @default(autoincrement())
+  cashierName    String    @default("Elizabeth Oña")
+  openedAt       DateTime  @default(now())
+  closedAt       DateTime?
+  openingAmount  Decimal   @db.Decimal(10,2)
+  expectedAmount Decimal?  @db.Decimal(10,2)
+  closingAmount  Decimal?  @db.Decimal(10,2)
+  difference     Decimal?  @db.Decimal(10,2)
+  status         String    @default("OPEN")
+  notes          String?
+  sales          Sale[]
+
+  @@index([status])
+  @@index([openedAt])
+}
+
+model StoreSettings {
+  id        Int      @id @default(1)
+  taxRate   Decimal  @default(0.12) @db.Decimal(5,4)
+  updatedAt DateTime @updatedAt
 }

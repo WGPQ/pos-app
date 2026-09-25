@@ -214,7 +214,7 @@ const ImportItems = ({ items, className }: ImportItemsProps) => {
           in_store: stateValue ?? true,
         }
 
-        if (id && productById.has(id)) {
+        if (id) {
           updates.push({ id, data: baseData })
         } else {
           creates.push({

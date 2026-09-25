@@ -1,5 +1,3 @@
-import { Product } from "./productService";
-
 export interface SaleItem {
   id: number;
   productId: number | null;
@@ -14,6 +12,14 @@ export interface Sale {
   id: number;
   receiptNumber: string;
   total: number | string;
+  subtotal?: number | string;
+  discount?: number | string;
+  tax?: number | string;
+  paymentMethod?: "CASH" | "CARD" | "BANK_TRANSFER" | "OTHER";
+  amountReceived?: number | string | null;
+  change?: number | string;
+  cashierName?: string;
+  cancellationReason?: string | null;
   status: string;
   createdAt: string;
   items: SaleItem[];
@@ -24,10 +30,15 @@ export interface Sale {
   } | null;
 }
 
+export interface SalesResponse {
+  data: Sale[];
+  pagination: { page: number; pageSize: number; total: number; totalPages: number };
+}
+
 const API_URL = "/api/sales";
 
-export async function getSales(): Promise<Sale[]> {
-  const res = await fetch(API_URL, { cache: "no-store" });
+export async function getSales(): Promise<SalesResponse> {
+  const res = await fetch(`${API_URL}?page=1&pageSize=20`, { cache: "no-store" });
   if (!res.ok) throw new Error("Error al obtener ventas");
   return res.json();
 }
@@ -36,9 +47,11 @@ export async function createSale(payload: {
   clientId?: number;
   isFinalConsumer?: boolean;
   items: Array<{ productId: number; quantity: number }>;
+  paymentMethod: "CASH" | "CARD" | "BANK_TRANSFER" | "OTHER";
+  amountReceived?: number;
+  discount?: number;
 }): Promise<{
   sale: Sale;
-  updatedProducts: Product[];
 }> {
   const res = await fetch(API_URL, {
     method: "POST",
@@ -52,14 +65,14 @@ export async function createSale(payload: {
   return res.json();
 }
 
-export async function cancelSale(id: number): Promise<{
+export async function cancelSale({ id, reason }: { id: number; reason: string }): Promise<{
   sale: Sale;
-  updatedProducts: Product[];
+  updatedProducts: Array<{ id: number; quantity: number }>;
 }> {
   const res = await fetch(`${API_URL}/${id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action: "cancel" }),
+    body: JSON.stringify({ action: "cancel", reason }),
   });
   if (!res.ok) {
     const data = await res.json().catch(() => null);

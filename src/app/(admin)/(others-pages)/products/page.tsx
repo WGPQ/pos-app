@@ -1,132 +1,46 @@
-'use client'
-import { useEffect, useMemo, useState } from 'react'
+"use client";
 
-import SearchItems from '@/components/Item/SearchItems'
-import AddButtonItem from '@/components/Item/AddButtonItem'
-import ExportItems from '@/components/Item/ExportItems'
-import ImportItems from '@/components/Item/ImportItems'
+import { useQuery } from "@tanstack/react-query";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import Image from "next/image";
+import { AlertTriangle, ChevronLeft, ChevronRight, Download, Edit3, Eye, Grid2X2, ListFilter, LoaderCircle, Package, Plus, Search, Upload, Wallet } from "lucide-react";
+import { getProduct, getProductsPage, Product } from "@/services/productService";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useProductStore } from "@/store/productStore";
+import ItemDetails from "@/components/Item/ItemDetails";
+import ExportItems from "@/components/Item/ExportItems";
+import ImportItems from "@/components/Item/ImportItems";
+import Button from "@/components/ui/button";
 
-import { useProducts } from '@/hooks/useProducts'
-import { Product } from '@/services/productService'
-import { useProductStore } from '@/store/productStore'
+const money = (value: number) => new Intl.NumberFormat("es-EC", { style: "currency", currency: "USD" }).format(value);
+const stockInfo = (product: Product) => product.quantity <= 0 ? { label: "Agotado", classes: "bg-red-100 text-red-700", bar: "bg-red-500" } : product.quantity <= (product.minStock ?? 5) ? { label: "Stock bajo", classes: "bg-amber-100 text-amber-800", bar: "bg-amber-500" } : { label: "En stock", classes: "bg-emerald-100 text-emerald-700", bar: "bg-emerald-500" };
 
-import Loading from '@/components/ui/loading'
-import ListItems from '@/components/Item/ListItems'
-import Pagination from '@/components/Item/Pagination'
-import ComponentCard from '@/components/common/ComponentCard'
-
-
-export const applyFilters = (products: Product[], query: string): Product[] => {
-  if (!query) return products;
-
-  const loweredQuery = query.toLowerCase();
-
-  const properties: (keyof Pick<Product, "name" | "sku" | "description">)[] = [
-    "name",
-    "sku",
-    "description",
-  ];
-
-  return products.filter((item) =>
-    properties.some((prop) =>
-      item[prop]?.toLowerCase().includes(loweredQuery)
-    )
-  );
-};
-
-const ProductsPage = () => {
-  const { productsQuery } = useProducts();
-  const hasLoadData = useProductStore((state) => state.hasLoadData);
-  const loadingProducts = useProductStore((state) => state.loadingProducts);
-  const products = useProductStore((state) => state.products);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [itemsPerPage, setItemsPerPage] = useState(6);
-
-  useEffect(() => {
-    const calculateItemsPerPage = () => {
-      const availableHeight = window.innerHeight - 300;
-      const rowHeight = 88;
-      const maxItems = Math.floor(availableHeight / rowHeight);
-      setItemsPerPage(maxItems > 3 ? maxItems : 3);
-    };
-
-    calculateItemsPerPage();
-    window.addEventListener("resize", calculateItemsPerPage);
-    return () => window.removeEventListener("resize", calculateItemsPerPage);
-  }, []);
-
-  const filteredProducts = useMemo(() => {
-    return applyFilters(products, searchTerm.toLowerCase());
-  }, [searchTerm, products]);
-
-  const paginatedProducts = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    return filteredProducts.slice(startIndex, startIndex + itemsPerPage);
-  }, [currentPage, filteredProducts, itemsPerPage]);
-
-
-  useEffect(() => {
-    if (!hasLoadData) {
-      productsQuery.refetch();
-    }
-  }, [hasLoadData, productsQuery]);
-
-  useEffect(() => {
-    const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages || 1);
-    }
-  }, [filteredProducts, currentPage, itemsPerPage]);
-
-  if (loadingProducts) {
-    return <Loading message='Cargando productos...' />
-  }
-
-  return (
-    <div>
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-        <h2
-          className="text-xl font-semibold text-gray-800 dark:text-white/90"
-          x-text="pageName"
-        >
-          {"Inventario"}
-        </h2>
-      </div>
-      <div className="space-y-4">
-        <ComponentCard
-          header={
-            <div className="pt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="w-full sm:max-w-[430px]">
-                <SearchItems setSearchTerm={setSearchTerm} value={searchTerm} />
-              </div>
-              <div className="grid w-full grid-cols-3 gap-2 sm:flex sm:w-auto sm:flex-nowrap sm:justify-end">
-                <ExportItems items={products} className="w-full sm:w-auto" />
-                <ImportItems items={products} className="w-full sm:w-auto" />
-                <AddButtonItem className="w-full sm:w-auto" />
-              </div>
-            </div>
-          }
-        >
-
-          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-            <div className="max-w-full overflow-x-auto">
-              <div className="min-w-[1102px]">
-                <ListItems
-                  products={paginatedProducts}
-                />
-              </div>
-            </div>
-          </div>
-          <Pagination
-            currentPage={currentPage}
-            totalPages={Math.ceil(filteredProducts.length / itemsPerPage)}
-            onPageChange={setCurrentPage}
-          />
-        </ComponentCard>
-      </div>
-    </div>
-  )
+function ProductsContent() {
+  const [search, setSearch] = useState(""); const [debouncedSearch, setDebouncedSearch] = useState(""); const [category, setCategory] = useState(""); const [stockStatus, setStockStatus] = useState(""); const [page, setPage] = useState(1); const searchParams = useSearchParams(); const router = useRouter(); const requestedProductId = Number(searchParams.get("product"));
+  const setSelected = useProductStore((state) => state.setSelectedProduct); const setDetails = useProductStore((state) => state.setShowDetailsProduct); const setNew = useProductStore((state) => state.setShowNewProduct);
+  const requestedProduct = useQuery({ queryKey: ["product-detail", requestedProductId], queryFn: () => getProduct(requestedProductId), enabled: Number.isInteger(requestedProductId) && requestedProductId > 0 });
+  useEffect(() => { if (!requestedProduct.data) return; setSelected(requestedProduct.data); setDetails(true); router.replace("/products"); }, [requestedProduct.data, router, setDetails, setSelected]);
+  useEffect(() => { const timeout = window.setTimeout(() => { setDebouncedSearch(search); setPage(1); }, 300); return () => window.clearTimeout(timeout); }, [search]);
+  const productsQuery = useQuery({ queryKey: ["products", { debouncedSearch, category, stockStatus, page }], queryFn: () => getProductsPage({ search: debouncedSearch, category, stockStatus, page, pageSize: 10 }), placeholderData: (previous) => previous });
+  const products = productsQuery.data?.data ?? []; const pagination = productsQuery.data?.pagination; const changingPage = productsQuery.isFetching && !productsQuery.isLoading;
+  const metrics = useMemo(() => ({ value: products.reduce((total, item) => total + Number(item.cost) * item.quantity, 0), low: products.filter((item) => item.quantity > 0 && item.quantity <= (item.minStock ?? 5)).length, out: products.filter((item) => item.quantity <= 0).length, margin: products.length ? products.reduce((total, item) => total + ((Number(item.price) - Number(item.cost)) / Math.max(Number(item.price), 0.01)) * 100, 0) / products.length : 0 }), [products]);
+  const openDetails = (product: Product) => { setSelected(product); setDetails(true); };
+  const edit = (product: Product) => { setSelected(product); setNew(true); };
+  return <div className="space-y-5 pb-8">
+    <section className="space-y-4 lg:hidden"><div><h1 className="text-xl font-extrabold tracking-tight text-slate-900">Inventario</h1><p className="mt-1 flex items-center gap-1 text-xs font-medium text-slate-500"><span className="h-2 w-2 rounded-full bg-emerald-500" />Caja #1 Abierta</p></div><div className="grid grid-cols-3 gap-2"><MobileMetric value={pagination?.total ?? 0} label="Productos" tone="text-slate-900" /><MobileMetric value={metrics.out} label="Agotados" tone="text-red-700" prefix="• " /><MobileMetric value={metrics.low} label="Stock Bajo" tone="text-violet-700" prefix="• " /></div><div className="flex gap-2"><label className="relative min-w-0 flex-1"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar producto o SKU…" className="h-12 w-full rounded-2xl border-0 bg-white pl-10 pr-3 text-sm font-medium shadow-theme-sm outline-none ring-purple-200 focus:ring-4" /></label><button type="button" className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-slate-600 shadow-theme-sm"><ListFilter className="h-5 w-5" /></button><button onClick={() => setNew(true)} className="flex h-12 items-center gap-1 rounded-2xl bg-purple-700 px-4 text-sm font-bold text-white shadow-lg"><Plus className="h-4 w-4" />Nuevo</button></div><div className="flex gap-2 overflow-x-auto pb-1">{[["", "", "Todos"], ["", "LOW", "Bajo Stock"], ["", "OUT", "Agotados"], ["papelería", "", "Papelería"], ["oficina", "", "Oficina"]].map(([nextCategory, nextStatus, label]) => { const active = category === nextCategory && stockStatus === nextStatus; return <button key={label} onClick={() => { setCategory(nextCategory); setStockStatus(nextStatus); setPage(1); }} className={`whitespace-nowrap rounded-full px-4 py-2 text-xs font-bold ${active ? "bg-purple-700 text-white" : "bg-white text-slate-600 shadow-theme-sm"}`}>{label}</button> })}</div></section>
+    <header className="hidden flex-col gap-4 lg:flex xl:flex-row xl:items-start xl:justify-between"><div><div className="flex flex-wrap items-center gap-2"><h1 className="text-3xl font-bold tracking-tight text-gray-900">Inventario de Productos</h1><span className="rounded-full bg-violet-100 px-2.5 py-1 text-xs font-semibold text-violet-700">Actualizado ahora</span></div><div className="mt-3 flex flex-wrap gap-2 text-sm"><span className="rounded-full bg-violet-50 px-3 py-1.5 text-violet-700"><b>{pagination?.total ?? "—"}</b> productos totales</span><span className="rounded-full bg-amber-50 px-3 py-1.5 text-amber-800"><b>{metrics.low}</b> bajo stock crítico</span><span className="rounded-full bg-red-50 px-3 py-1.5 text-red-700"><b>{metrics.out}</b> agotados</span></div></div><div className="flex flex-wrap gap-2"><ExportItems filters={{ search: debouncedSearch, category, stockStatus }} className="h-10" /><ImportItems items={products} className="h-10" /><Button size="sm" className="h-10 bg-purple-700 text-white hover:bg-purple-800" onClick={() => setNew(true)}><Plus className="mr-2 h-4 w-4" />Nuevo producto</Button></div></header>
+    <section className="hidden gap-4 sm:grid-cols-2 xl:grid lg:grid-cols-4"><Metric label="Valor en inventario" value={money(metrics.value)} icon={Wallet} tone="text-purple-700 bg-violet-100" /><Metric label="Artículos por reponer" value={`${metrics.low + metrics.out} SKU`} icon={AlertTriangle} tone="text-amber-700 bg-amber-100" /><Metric label="Margen promedio" value={`${metrics.margin.toFixed(1)}%`} icon={Package} tone="text-emerald-700 bg-emerald-100" /><Metric label="Productos disponibles" value={`${Math.max((pagination?.total ?? 0) - metrics.out, 0)} uds`} icon={ListFilter} tone="text-blue-700 bg-blue-100" /></section>
+    <section className="hidden rounded-2xl border border-gray-100 bg-white p-4 shadow-theme-sm lg:block"><div className="flex flex-col gap-3 lg:flex-row"><label className="relative min-w-0 flex-1"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar por producto, SKU o código de barras…" className="h-11 w-full rounded-xl border border-gray-200 bg-gray-50 pl-10 pr-3 text-sm outline-none transition focus:border-purple-400 focus:ring-4 focus:ring-purple-100" /></label><select value={category} onChange={(event) => { setCategory(event.target.value); setPage(1); }} className="h-11 rounded-xl border border-gray-200 bg-white px-3 text-sm font-medium text-gray-700"><option value="">Categoría: todas</option><option value="oficina">Oficina</option><option value="papelería">Papelería</option><option value="escolar">Escolar</option></select><select value={stockStatus} onChange={(event) => { setStockStatus(event.target.value); setPage(1); }} className="h-11 rounded-xl border border-gray-200 bg-white px-3 text-sm font-medium text-gray-700"><option value="">Estado: todos</option><option value="IN">En stock</option><option value="OUT">Agotado</option></select><span className="flex h-11 items-center gap-2 rounded-xl bg-violet-50 px-3 text-sm font-medium text-violet-700"><Grid2X2 className="h-4 w-4" />Vista tabla</span></div></section>
+    <section className="relative space-y-3 lg:hidden">{changingPage && <PageLoading />} {productsQuery.isLoading ? <div className="rounded-2xl bg-white p-10 text-center text-sm text-gray-500">Cargando inventario…</div> : products.map((product) => { const stock = stockInfo(product); return <article key={product.id} className="rounded-2xl border border-slate-100 bg-white p-3 shadow-theme-sm"><div className="flex gap-3"><Image src={product.image || "/placeholder.svg"} alt="" width={68} height={68} className="h-[68px] w-[68px] rounded-xl object-cover" /><div className="min-w-0 flex-1"><div className="flex justify-between gap-2"><button onClick={() => openDetails(product)} className="truncate text-left text-sm font-extrabold text-slate-900">{product.name}</button><b className="whitespace-nowrap text-sm text-purple-700">{money(Number(product.price))}</b></div><p className="mt-1 truncate text-[11px] font-semibold text-slate-500">SKU-{product.sku} · {product.category}</p><div className="mt-2 flex items-center justify-between"><span className={`rounded-full px-2 py-1 text-[11px] font-bold ${stock.classes}`}>● {product.quantity} uds · {stock.label}</span><div className="flex"><button aria-label={`Ver ${product.name}`} onClick={() => openDetails(product)} className="rounded-lg p-2 text-slate-500"><Eye className="h-4 w-4" /></button><button aria-label={`Editar ${product.name}`} onClick={() => edit(product)} className="rounded-lg p-2 text-slate-500"><Edit3 className="h-4 w-4" /></button></div></div></div></div></article> })}{!productsQuery.isLoading && !products.length && <div className="rounded-2xl bg-white p-10 text-center"><Package className="mx-auto h-9 w-9 text-gray-300" /><p className="mt-3 font-semibold text-gray-700">No encontramos productos</p></div>}</section>
+    <section className="relative hidden overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-theme-sm lg:block">{changingPage && <PageLoading />}<div className="overflow-x-auto"><table className="w-full min-w-[940px] text-left"><thead className="bg-violet-50 text-xs font-bold uppercase tracking-wide text-gray-600"><tr><th className="px-5 py-4">Producto y categoría</th><th className="px-5 py-4">Stock y nivel</th><th className="px-5 py-4">Costo</th><th className="px-5 py-4">P. venta</th><th className="px-5 py-4">Margen</th><th className="px-5 py-4">Acciones</th></tr></thead><tbody className="divide-y divide-gray-100">{productsQuery.isLoading ? <tr><td colSpan={6} className="px-5 py-16 text-center text-gray-500">Cargando inventario…</td></tr> : products.map((product) => { const stock = stockInfo(product); const margin = ((Number(product.price) - Number(product.cost)) / Math.max(Number(product.price), 0.01)) * 100; const progress = Math.min(100, (product.quantity / Math.max((product.minStock ?? 5) * 2, 1)) * 100); return <tr key={product.id} className={product.quantity <= 0 ? "bg-red-50/40" : "hover:bg-gray-50/70"}><td className="px-5 py-4"><div className="flex items-center gap-3"><Image src={product.image || "/placeholder.svg"} alt="" width={50} height={50} className="h-12 w-12 rounded-xl object-cover" /><div className="min-w-0"><button onClick={() => openDetails(product)} className="block max-w-[260px] truncate text-left font-bold text-gray-900 hover:text-purple-700">{product.name}</button><p className="mt-1 text-xs font-semibold tracking-wide text-gray-500">{product.sku} <span className="mx-1">•</span><span className="rounded-md bg-violet-50 px-1.5 py-0.5 normal-case text-violet-700">{product.category}</span></p></div></div></td><td className="px-5 py-4"><div className="flex items-center justify-between gap-2"><span className={`rounded-full px-2 py-1 text-xs font-bold ${stock.classes}`}>● {stock.label}</span><b className="text-sm text-gray-800">{product.quantity} uds</b></div><div className="mt-2 h-1.5 w-36 overflow-hidden rounded-full bg-slate-100"><div className={`h-full rounded-full ${stock.bar}`} style={{ width: `${progress}%` }} /></div><p className="mt-1 text-xs text-gray-400">Mínimo: {product.minStock ?? 5}</p></td><td className="px-5 py-4 text-sm text-gray-600">{money(Number(product.cost))}</td><td className="px-5 py-4 text-base font-bold text-gray-900">{money(Number(product.price))}</td><td className="px-5 py-4"><span className="rounded-md bg-emerald-100 px-2 py-1 text-xs font-bold text-emerald-700">{margin.toFixed(1)}%</span></td><td className="px-5 py-4"><div className="flex items-center gap-2"><button aria-label={`Ver ${product.name}`} onClick={() => openDetails(product)} className="rounded-lg p-2 text-gray-500 hover:bg-violet-50 hover:text-purple-700"><Eye className="h-4 w-4" /></button><button aria-label={`Editar ${product.name}`} onClick={() => edit(product)} className="rounded-lg p-2 text-gray-500 hover:bg-violet-50 hover:text-purple-700"><Edit3 className="h-4 w-4" /></button></div></td></tr> })}{!productsQuery.isLoading && !products.length && <tr><td colSpan={6} className="px-5 py-16 text-center"><Package className="mx-auto h-9 w-9 text-gray-300" /><p className="mt-3 font-semibold text-gray-700">No encontramos productos</p><p className="mt-1 text-sm text-gray-500">Cambia los filtros o agrega tu primer producto.</p></td></tr>}</tbody></table></div></section><footer className="flex flex-col gap-3 rounded-2xl bg-white px-5 py-4 text-sm shadow-theme-sm sm:flex-row sm:items-center sm:justify-between"><p className="text-gray-500">Mostrando {products.length} de {pagination?.total ?? 0} productos</p><div className="flex items-center gap-2"><button onClick={() => setPage(Math.max(1, page - 1))} disabled={page <= 1 || changingPage} className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-2 font-semibold text-slate-700 disabled:opacity-40"><ChevronLeft className="h-4 w-4" /><span className="hidden sm:inline">Anterior</span></button><span className="rounded-lg bg-purple-700 px-3 py-2 font-bold text-white">{page}</span><button onClick={() => setPage(Math.min(pagination?.totalPages ?? 1, page + 1))} disabled={page >= (pagination?.totalPages ?? 1) || changingPage} className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-2 font-semibold text-slate-700 disabled:opacity-40"><span className="hidden sm:inline">Siguiente</span><ChevronRight className="h-4 w-4" /></button></div></footer>
+    <ItemDetails />
+  </div>;
 }
 
-export default ProductsPage
+export default function ProductsPage() {
+  return <Suspense fallback={<div className="min-h-[500px] animate-pulse rounded-2xl bg-slate-100" />}><ProductsContent /></Suspense>;
+}
+
+function Metric({ label, value, icon: Icon, tone }: { label: string; value: string; icon: typeof Package; tone: string }) { return <article className="rounded-2xl border border-gray-100 bg-white p-5 shadow-theme-sm"><div className="flex items-start justify-between"><div><p className="text-xs font-bold uppercase tracking-wide text-gray-500">{label}</p><p className="mt-2 text-2xl font-bold text-gray-900">{value}</p><p className="mt-1 text-xs text-gray-500">Resumen de esta página</p></div><span className={`rounded-xl p-3 ${tone}`}><Icon className="h-5 w-5" /></span></div></article>; }
+function MobileMetric({ value, label, tone, prefix = "" }: { value: number; label: string; tone: string; prefix?: string }) { return <div className="rounded-2xl bg-white px-2 py-3 text-center shadow-theme-sm"><p className={`text-xl font-extrabold ${tone}`}>{prefix}{value}</p><p className="mt-1 text-xs font-semibold text-slate-600">{label}</p></div>; }
+function PageLoading() { return <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/70 backdrop-blur-[1px]"><span className="flex items-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-bold text-purple-700 shadow-theme-lg"><LoaderCircle className="h-5 w-5 animate-spin" />Cargando productos…</span></div>; }

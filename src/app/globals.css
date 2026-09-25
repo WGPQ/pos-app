@@ -190,6 +190,23 @@
   body {
     @apply relative font-normal font-outfit z-1 bg-gray-50;
   }
+  input,
+  textarea,
+  select {
+    color: #101828;
+    caret-color: #101828;
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: #98a2b3;
+    opacity: 1;
+  }
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus {
+    -webkit-text-fill-color: #101828;
+    caret-color: #101828;
+  }
 }
 
 @utility menu-item {
@@ -253,30 +270,82 @@
 }
 
 @utility no-scrollbar {
-  /* Chrome, Safari and Opera */
+  /* Unified scrollbar treatment: visible, subtle and easy to grab. */
   &::-webkit-scrollbar {
-    display: none;
+    width: 10px;
+    height: 10px;
   }
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    min-height: 40px;
+    border: 3px solid transparent;
+    border-radius: 999px;
+    background: #cbd5e1;
+    background-clip: padding-box;
+  }
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
 }
 
 @utility custom-scrollbar {
   &::-webkit-scrollbar {
-    @apply size-1.5;
+    width: 10px;
+    height: 10px;
   }
 
   &::-webkit-scrollbar-track {
-    @apply rounded-full;
+    background: transparent;
   }
 
   &::-webkit-scrollbar-thumb {
-    @apply bg-gray-200 rounded-full dark:bg-gray-700;
+    min-height: 40px;
+    border: 3px solid transparent;
+    border-radius: 999px;
+    background: #cbd5e1;
+    background-clip: padding-box;
   }
+
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
 }
 
 .dark .custom-scrollbar::-webkit-scrollbar-thumb {
   background-color: #344054;
+}
+
+/* Default scrollbars, including horizontal tables and page scrolling. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  min-height: 40px;
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: #cbd5e1;
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #98a2b3;
+  background-clip: padding-box;
+}
+
+.dark *::-webkit-scrollbar-thumb {
+  background: #475467;
+  background-clip: padding-box;
 }
 
 

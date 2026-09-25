@@ -1,26 +1,33 @@
-import { NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server";
 
-type SaleItemRequest = {
-  productId: number;
-  quantity: number;
-};
+const FINAL_CONSUMER_CI = "9999999999";
+const PAYMENT_METHODS = new Set(["CASH", "CARD", "BANK_TRANSFER", "OTHER"]);
+type SaleItemRequest = { productId: number; quantity: number };
+const currency = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100;
+const receiptDate = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Guayaquil", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date()).replaceAll("-", "");
 
-const buildReceiptNumber = () => `REC-${Date.now()}`;
-
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const sales = await prisma.sale.findMany({
-      orderBy: { createdAt: "desc" },
-      include: { items: true, client: true },
-    });
-
-    return NextResponse.json(sales);
+    const { searchParams } = new URL(request.url);
+    const page = Math.max(1, Number(searchParams.get("page") ?? 1));
+    const pageSize = Math.min(100, Math.max(1, Number(searchParams.get("pageSize") ?? 20)));
+    const search = searchParams.get("search")?.trim();
+    const paymentMethod = searchParams.get("paymentMethod");
+    const status = searchParams.get("status");
+    const where = {
+      ...(status ? { status } : {}), ...(paymentMethod ? { paymentMethod } : {}),
+      ...(search ? { OR: [{ receiptNumber: { contains: search, mode: "insensitive" as const } }, { client: { name: { contains: search, mode: "insensitive" as const } } }, { client: { ci: { contains: search, mode: "insensitive" as const } } }] } : {}),
+    };
+    const [data, total] = await prisma.$transaction([
+      prisma.sale.findMany({ where, orderBy: { createdAt: "desc" }, skip: (page - 1) * pageSize, take: pageSize, include: { items: true, client: true, cashSession: { select: { id: true, status: true } } } }),
+      prisma.sale.count({ where }),
+    ]);
+    return NextResponse.json({ data, pagination: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) } });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Error obteniendo ventas" },
-      { status: 500 }
-    );
+    console.error("Error fetching sales", error);
+    return NextResponse.json({ error: "Error obteniendo ventas" }, { status: 500 });
   }
 }
 
@@ -28,139 +35,46 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const rawItems = Array.isArray(body.items) ? body.items : [];
-    const clientIdRaw = body.clientId;
-    const isFinalConsumer = Boolean(body.isFinalConsumer);
-
-    if (!rawItems.length) {
-      return NextResponse.json(
-        { error: "No hay productos para registrar la venta." },
-        { status: 400 }
-      );
-    }
-
-    if (!isFinalConsumer && (clientIdRaw === null || clientIdRaw === undefined)) {
-      return NextResponse.json(
-        { error: "Debe seleccionar un cliente válido." },
-        { status: 400 }
-      );
-    }
-
+    const paymentMethod = String(body.paymentMethod ?? "CASH");
+    const discount = currency(Number(body.discount ?? 0));
+    const amountReceived = body.amountReceived === undefined || body.amountReceived === "" ? null : currency(Number(body.amountReceived));
+    if (!rawItems.length) return NextResponse.json({ error: "Agrega al menos un producto a la venta." }, { status: 400 });
+    if (!PAYMENT_METHODS.has(paymentMethod)) return NextResponse.json({ error: "Método de pago inválido." }, { status: 400 });
+    if (!Number.isFinite(discount) || discount < 0 || (amountReceived !== null && (!Number.isFinite(amountReceived) || amountReceived < 0))) return NextResponse.json({ error: "Los valores de cobro no son válidos." }, { status: 400 });
     const itemMap = new Map<number, number>();
     for (const item of rawItems as SaleItemRequest[]) {
-      const productId = Number(item.productId);
-      const quantity = Number(item.quantity);
-      if (!Number.isInteger(productId) || productId <= 0) {
-        return NextResponse.json(
-          { error: "Producto inválido en la venta." },
-          { status: 400 }
-        );
-      }
-      if (!Number.isFinite(quantity) || quantity <= 0) {
-        return NextResponse.json(
-          { error: "Cantidad inválida en la venta." },
-          { status: 400 }
-        );
-      }
+      const productId = Number(item.productId); const quantity = Number(item.quantity);
+      if (!Number.isInteger(productId) || productId <= 0 || !Number.isInteger(quantity) || quantity <= 0) return NextResponse.json({ error: "Hay un producto o cantidad inválida en la venta." }, { status: 400 });
       itemMap.set(productId, (itemMap.get(productId) ?? 0) + quantity);
     }
-
-    const productIds = Array.from(itemMap.keys());
-    const products = await prisma.product.findMany({
-      where: { id: { in: productIds } },
+    const sale = await prisma.$transaction(async (tx) => {
+      const cashSession = await tx.cashSession.findFirst({ where: { status: "OPEN" }, orderBy: { openedAt: "desc" } });
+      if (!cashSession) throw new Error("OPEN_CASH_SESSION_REQUIRED");
+      const products = await tx.product.findMany({ where: { id: { in: [...itemMap.keys()] } } });
+      if (products.length !== itemMap.size) throw new Error("PRODUCT_NOT_FOUND");
+      const items = products.map((product) => { const quantity = itemMap.get(product.id)!; return { productId: product.id, productName: product.name, productSku: product.sku, unitPrice: Number(product.price), quantity, subtotal: currency(Number(product.price) * quantity) }; });
+      const subtotal = currency(items.reduce((sum, item) => sum + item.subtotal, 0));
+      if (discount > subtotal) throw new Error("INVALID_DISCOUNT");
+      const settings = await tx.storeSettings.upsert({ where: { id: 1 }, update: {}, create: { id: 1, taxRate: 0.12 } });
+      const tax = currency((subtotal - discount) * Number(settings.taxRate)); const total = currency(subtotal - discount + tax);
+      if (paymentMethod === "CASH" && (amountReceived === null || amountReceived < total)) throw new Error("INSUFFICIENT_CASH");
+      for (const product of products) {
+        const updated = await tx.product.updateMany({ where: { id: product.id, quantity: { gte: itemMap.get(product.id)! } }, data: { quantity: { decrement: itemMap.get(product.id)! } } });
+        if (updated.count !== 1) throw new Error(`INSUFFICIENT_STOCK:${product.name}`);
+      }
+      await tx.product.updateMany({ where: { id: { in: products.map((p) => p.id) }, quantity: { lte: 0 } }, data: { in_store: false } });
+      const client = body.isFinalConsumer ? await tx.client.upsert({ where: { ci: FINAL_CONSUMER_CI }, update: {}, create: { ci: FINAL_CONSUMER_CI, name: "Consumidor Final" } }) : await tx.client.findUnique({ where: { id: Number(body.clientId) } });
+      if (!client) throw new Error("INVALID_CLIENT");
+      const draft = await tx.sale.create({ data: { receiptNumber: `PENDING-${randomUUID()}`, subtotal, discount, tax, total, paymentMethod, amountReceived: paymentMethod === "CASH" ? amountReceived : null, change: paymentMethod === "CASH" ? currency((amountReceived ?? 0) - total) : 0, status: "COMPLETED", cashierName: "Elizabeth Oña", cashSessionId: cashSession.id, clientId: client.id, items: { create: items } } });
+      return tx.sale.update({ where: { id: draft.id }, data: { receiptNumber: `V-${receiptDate()}-${String(draft.id).padStart(6, "0")}` }, include: { items: true, client: true, cashSession: true } });
     });
-
-    if (products.length !== productIds.length) {
-      return NextResponse.json(
-        { error: "Algunos productos no existen en el inventario." },
-        { status: 400 }
-      );
-    }
-
-    let client = null;
-    if (!isFinalConsumer) {
-      const clientId = Number(clientIdRaw);
-      if (!Number.isInteger(clientId) || clientId <= 0) {
-        return NextResponse.json(
-          { error: "Debe seleccionar un cliente válido." },
-          { status: 400 }
-        );
-      }
-      client = await prisma.client.findUnique({
-        where: { id: clientId },
-      });
-      if (!client) {
-        return NextResponse.json(
-          { error: "El cliente no existe." },
-          { status: 400 }
-        );
-      }
-    }
-
-    const saleItemsData = [];
-    const updates: Array<{ id: number; quantity: number }> = [];
-    let total = 0;
-
-    for (const product of products) {
-      const requestedQuantity = itemMap.get(product.id) ?? 0;
-      if (product.quantity < requestedQuantity) {
-        return NextResponse.json(
-          { error: `Stock insuficiente para ${product.name}.` },
-          { status: 400 }
-        );
-      }
-      const unitPrice = Number(product.price);
-      const subtotal = unitPrice * requestedQuantity;
-      total += subtotal;
-
-      saleItemsData.push({
-        productId: product.id,
-        productName: product.name,
-        productSku: product.sku,
-        unitPrice,
-        quantity: requestedQuantity,
-        subtotal,
-      });
-
-      const nextQuantity = product.quantity - requestedQuantity;
-      updates.push({ id: product.id, quantity: nextQuantity });
-    }
-
-    const receiptNumber = buildReceiptNumber();
-    const result = await prisma.$transaction(async (tx) => {
-      const sale = await tx.sale.create({
-        data: {
-          receiptNumber,
-          total,
-          status: "Completed",
-          clientId: client?.id ?? null,
-          items: {
-            create: saleItemsData,
-          },
-        },
-        include: { items: true, client: true },
-      });
-
-      const updatedProducts = await Promise.all(
-        updates.map((update) =>
-          tx.product.update({
-            where: { id: update.id },
-            data: {
-              quantity: update.quantity,
-              in_store: update.quantity > 0,
-            },
-          })
-        )
-      );
-
-      return { sale, updatedProducts };
-    });
-
-    return NextResponse.json(result, { status: 201 });
+    return NextResponse.json({ sale }, { status: 201 });
   } catch (error) {
-    console.error("Error creating sale:", error);
-    return NextResponse.json(
-      { error: "Error al registrar la venta" },
-      { status: 500 }
-    );
+    const code = error instanceof Error ? error.message : "";
+    const errors: Record<string, string> = { OPEN_CASH_SESSION_REQUIRED: "Debes abrir caja antes de registrar ventas.", PRODUCT_NOT_FOUND: "Uno o más productos ya no existen.", INVALID_DISCOUNT: "El descuento no puede superar el subtotal.", INSUFFICIENT_CASH: "El efectivo recibido es menor al total.", INVALID_CLIENT: "El cliente seleccionado no es válido." };
+    const friendly = code.startsWith("INSUFFICIENT_STOCK:") ? `Stock insuficiente para ${code.split(":")[1]}.` : errors[code];
+    if (friendly) return NextResponse.json({ error: friendly }, { status: 400 });
+    console.error("Error creating sale", error);
+    return NextResponse.json({ error: "No fue posible registrar la venta. Inténtalo nuevamente." }, { status: 500 });
   }
 }

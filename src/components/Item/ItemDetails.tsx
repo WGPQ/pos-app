@@ -1,123 +1,30 @@
-import { useProductStore } from '@/store/productStore'
-import Image from 'next/image'
-import { Modal } from '../ui/modal';
-import Badge from '../ui/badge';
-import Button from '../ui/button';
-import { Edit } from 'lucide-react';
+"use client";
 
-const ItemDetails = () => {
-  const showDetailsProduct = useProductStore((state) => state.showDetailsProduct);
-  const setShowDetailsProduct = useProductStore((state) => state.setShowDetailsProduct);
-  const setShowNewProduct = useProductStore((state) => state.setShowNewProduct);
-  const selectedProduct = useProductStore((state) => state.selectedProduct);
-  const setSelectedProduct = useProductStore((state) => state.setSelectedProduct);
+import { useEffect, useState } from "react";
+import Image from "next/image";
+import { AlertTriangle, Barcode, Boxes, Edit3, MapPin, Minus, PackageCheck, Plus, Save, Tag, X } from "lucide-react";
+import { Modal } from "../ui/modal";
+import Button from "../ui/button";
+import { useProductStore } from "@/store/productStore";
+import { useProducts } from "@/hooks/useProducts";
 
-  const onCloseDetails = () => {
-    setShowDetailsProduct(false);
-    setSelectedProduct(null);
-  }
+const money = (value: number) => new Intl.NumberFormat("es-EC", { style: "currency", currency: "USD" }).format(value);
 
-  const onEditProduct = () => {
-    setShowDetailsProduct(false);
-    setShowNewProduct(true);
-  }
-  return (
-    <Modal isOpen={showDetailsProduct} onClose={onCloseDetails} className="max-w-[600px] m-4">
-      <div className="no-scrollbar relative w-full max-w-[600px] overflow-y-auto rounded-3xl bg-white p-4 dark:bg-gray-900 lg:p-11">
-        <div className="px-2 pr-14">
-          <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
-            Detalle de Producto
-          </h4>
-          <p className="text-sm leading-6 text-gray-500 dark:text-gray-400">
-            Ver información detallada sobre este producto.
-          </p>
-        </div>
-
-        {selectedProduct && (
-          <div className="space-y-6 mt-4">
-            {/* Product Image and Basic Info */}
-            <div className="flex gap-6">
-              <div className="flex-shrink-0">
-                <Image
-                  alt={selectedProduct.name}
-                  width={140}
-                  height={140}
-                  src={selectedProduct.image || "/placeholder.svg"}
-                  className="w-32 h-32 rounded-lg object-cover border border-gray-200"
-                />
-              </div>
-              <div className="flex-1 space-y-3">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">{selectedProduct.name}</h3>
-                  <p className="text-sm text-gray-500">SKU: {selectedProduct.sku}</p>
-                </div>
-                <div className="flex flex-wrap items-center gap-3">
-                  {/* <Badge variant="outline" className="text-xs">
-                                    {selectedProduct.category}
-                                </Badge> */}
-                  <Badge
-                    size="md"
-                    color={selectedProduct.in_store ? 'success' : 'error'}
-                  >
-                    {selectedProduct.in_store ? "En tienda" : "Agotado"}
-                  </Badge>
-                  <Button
-                    size="sm"
-                    type="button"
-                    variant="outline"
-                    onClick={onEditProduct}
-                    startIcon={<Edit className="h-4 w-4" />}
-                    className="h-8"
-                  >
-                    Editar
-                  </Button>
-                </div>
-                <div>
-                  <span className="text-2xl font-bold text-gray-900">${parseFloat(selectedProduct.price.toString()).toFixed(2)}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Product Details Grid */}
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-3">
-                <h4 className="font-medium text-gray-900">Información del Producto</h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">SKU:</span>
-                    <span className="text-gray-900">{selectedProduct.sku}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Cantidad:</span>
-                    <span className="text-gray-900">{selectedProduct.quantity.toString()}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Costo:</span>
-                    <span className="text-gray-900 font-medium">${parseFloat(selectedProduct.cost.toString()).toFixed(2)}</span>
-                  </div>
-                </div>
-              </div>
-              <div className="space-y-3">
-                <h4 className="font-medium text-gray-900">Descripción</h4>
-                <p className="text-sm text-gray-500">
-                  {selectedProduct.description || "No hay descripción disponible para este producto."}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="flex justify-end mt-6 px-2">
-          <button
-            onClick={onCloseDetails}
-            className="inline-flex items-center justify-center rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-          >
-            Cerrar
-          </button>
-        </div>
-      </div>
-    </Modal>
-  )
+export default function ItemDetails() {
+  const show = useProductStore((state) => state.showDetailsProduct); const closeDetails = useProductStore((state) => state.setShowDetailsProduct); const selected = useProductStore((state) => state.selectedProduct); const setSelected = useProductStore((state) => state.setSelectedProduct); const openEditor = useProductStore((state) => state.setShowNewProduct); const { editProduct } = useProducts();
+  const [adjustment, setAdjustment] = useState(0); const [notice, setNotice] = useState<string | null>(null);
+  useEffect(() => { setAdjustment(0); setNotice(null); }, [selected?.id]);
+  if (!selected) return null;
+  const outOfStock = selected.quantity <= 0; const lowStock = !outOfStock && selected.quantity <= (selected.minStock ?? 5); const margin = ((Number(selected.price) - Number(selected.cost)) / Math.max(Number(selected.price), .01)) * 100; const newQuantity = Math.max(0, selected.quantity + adjustment);
+  const close = () => { closeDetails(false); setSelected(null); };
+  const apply = async () => { if (!adjustment || editProduct.isPending) return; try { const updated = await editProduct.mutateAsync({ id: selected.id, data: { quantity: newQuantity, in_store: newQuantity > 0 } }); setSelected(updated); setNotice(`Inventario actualizado: ${newQuantity} unidades disponibles.`); setAdjustment(0); } catch { setNotice("No se pudo actualizar el inventario."); } };
+  const edit = () => { closeDetails(false); openEditor(true); };
+  return <Modal isOpen={show} onClose={close} className="max-w-[700px] m-4"><div className="max-h-[88vh] overflow-y-auto rounded-3xl bg-white text-[#101828] shadow-2xl"><header className="flex items-center justify-between border-b border-slate-100 bg-[#eef3ff] px-6 py-4"><div className="flex items-center gap-3"><span className="rounded-xl bg-violet-100 p-3 text-violet-700"><PackageCheck className="h-5 w-5" /></span><div><p className="text-xs font-bold uppercase tracking-wide text-[#667085]">Detalle de producto</p><h2 className="text-lg font-extrabold">{selected.name}</h2></div></div><button onClick={close} aria-label="Cerrar detalle" className="rounded-lg p-2 text-[#475467] hover:bg-white"><X className="h-5 w-5" /></button></header>
+    <div className="space-y-5 p-6">{(outOfStock || lowStock) && <section className={`flex items-start gap-3 rounded-xl border p-4 ${outOfStock ? "border-red-200 bg-red-50 text-red-800" : "border-amber-200 bg-amber-50 text-amber-900"}`}><AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" /><div className="flex-1"><p className="font-bold">{outOfStock ? `Alerta: producto agotado (${selected.quantity} unidades)` : `Alerta: stock bajo (${selected.quantity} unidades)`}</p><p className="text-sm">{outOfStock ? "No está disponible para vender hasta reponerlo." : `El mínimo configurado es ${selected.minStock ?? 5} unidades.`}</p></div><button className="rounded-lg bg-white px-3 py-2 text-xs font-bold shadow-sm">Pedir a proveedor</button></section>}
+      <section className="flex flex-col gap-4 sm:flex-row"><Image src={selected.image || "/placeholder.svg"} alt={selected.name} width={140} height={140} className="h-32 w-32 rounded-2xl border border-slate-100 object-cover" /><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center justify-between gap-2"><span className="rounded-full bg-violet-100 px-3 py-1 text-xs font-bold text-violet-800">{selected.category || "General"}</span><span className="flex items-center gap-1 text-xs font-semibold tracking-wide text-[#667085]"><Barcode className="h-3.5 w-3.5" /> {selected.sku}</span></div><h3 className="mt-3 text-xl font-extrabold">{selected.name}</h3><p className="mt-1 text-sm leading-5 text-[#475467]">{selected.description || "Sin descripción registrada para este producto."}</p><p className="mt-3 inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-[#475467]"><MapPin className="h-3.5 w-3.5" /> Inventario principal</p></div></section>
+      <section className="grid grid-cols-2 gap-3 sm:grid-cols-3"><Info label="Código SKU" value={selected.sku} icon={Tag} /><Info label="Precio costo" value={money(Number(selected.cost))} sub="USD" /><Info label="Precio venta" value={money(Number(selected.price))} sub="USD" accent /><Info label="Margen bruto" value={`${margin.toFixed(1)}%`} sub={money(Number(selected.price) - Number(selected.cost))} good /><Info label="Stock mínimo" value={`${selected.minStock ?? 5} unidades`} /><Info label="Estado" value={outOfStock ? "Agotado" : lowStock ? "Stock bajo" : "En stock"} good={!outOfStock} /></section>
+      <section className="rounded-2xl bg-[#e8f0ff] p-4"><div className="flex items-center justify-between gap-3"><p className="flex items-center gap-2 text-sm font-extrabold"><Boxes className="h-4 w-4 text-violet-700" />Ajuste inmediato de existencias</p><span className="text-xs text-[#667085]">Auditoría automática</span></div><div className="mt-3 flex flex-col gap-3 sm:flex-row"><div className="flex flex-1 items-center justify-between rounded-xl bg-white shadow-sm"><button onClick={() => setAdjustment((value) => Math.max(-selected.quantity, value - 1))} className="p-3 text-[#475467]"><Minus className="h-4 w-4" /></button><div className="text-center"><p className="text-lg font-extrabold">{adjustment > 0 ? `+${adjustment}` : adjustment}</p><p className="text-[11px] text-[#667085]">Nuevo stock: {newQuantity}</p></div><button onClick={() => setAdjustment((value) => value + 1)} className="p-3 text-violet-700"><Plus className="h-4 w-4" /></button></div><Button onClick={apply} disabled={!adjustment || editProduct.isPending} className="bg-violet-700 text-white hover:bg-violet-800" startIcon={<Save className="h-4 w-4" />}>{editProduct.isPending ? "Aplicando…" : "Aplicar ajuste"}</Button></div>{notice && <p className="mt-2 text-xs font-semibold text-emerald-700">{notice}</p>}</section>
+    </div><footer className="flex flex-col-reverse gap-3 border-t border-slate-100 bg-[#f5f7ff] px-6 py-4 sm:flex-row sm:items-center sm:justify-between"><button onClick={close} className="text-sm font-medium text-[#475467]">Cerrar</button><div className="flex gap-2"><Button variant="outline" onClick={edit} startIcon={<Edit3 className="h-4 w-4" />}>Editar producto</Button><Button onClick={() => setAdjustment((value) => value + 1)} className="bg-violet-700 text-white hover:bg-violet-800" startIcon={<Plus className="h-4 w-4" />}>Ajustar inventario</Button></div></footer></div></Modal>;
 }
 
-export default ItemDetails
+function Info({ label, value, sub, accent, good, icon: Icon }: { label: string; value: string; sub?: string; accent?: boolean; good?: boolean; icon?: typeof Tag }) { return <div className="rounded-xl bg-[#eef3ff] p-3"><p className="flex items-center gap-1 text-xs font-semibold text-[#667085]">{Icon && <Icon className="h-3 w-3" />}{label}</p><p className={`mt-1 truncate text-base font-extrabold ${accent ? "text-violet-700" : good ? "text-emerald-700" : "text-[#101828]"}`}>{value} {sub && <span className="text-xs font-medium text-[#667085]">{sub}</span>}</p></div>; }
