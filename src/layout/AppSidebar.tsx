@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
+import { usePermissions } from "@/context/PermissionContext";
 import {
   Box,
   Users,
@@ -18,6 +19,7 @@ type NavItem = {
   name: string;
   icon: React.ElementType | React.ReactElement;
   path: string;
+  permission?: string;
 };
 
 const navItems: NavItem[] = [
@@ -25,48 +27,56 @@ const navItems: NavItem[] = [
     icon: Calculator,
     name: "Punto de venta",
     path: "/sales",
+    permission: "sale.create",
   },
   {
     icon: HomeIcon,
     name: "Inicio",
     path: "/",
+    permission: "dashboard.view",
   },
   {
     icon: Box,
     name: "Inventario",
     path: "/products",
+    permission: "product.view",
   },
   {
     icon: ShoppingBag,
     name: "Ventas",
     path: "/sales",
+    permission: "sale.view",
   },
   {
     icon: Users,
     name: "Clientes",
     path: "/clients",
+    permission: "customer.view",
   },
   {
     icon: BarChart3,
     name: "Reportes",
     path: "/reports",
+    permission: "report.view",
   },
   {
     icon: CircleDollarSign,
     name: "Caja registradora",
     path: "/cash-register",
+    permission: "cash.view",
   },
 ];
 
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
+  const { can, loading } = usePermissions();
   const pathname = usePathname();
 
   const renderMenuItems = (
     navItems: NavItem[],
   ) => (
     <ul className="flex flex-col gap-4">
-      {navItems.map((nav) => {
+      {navItems.filter((nav) => !loading && (!nav.permission || can(nav.permission))).map((nav) => {
         const Icon = nav.icon as React.ElementType;
         return (
           <li key={nav.name}>

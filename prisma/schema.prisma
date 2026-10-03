@@ -14,13 +14,170 @@ datasource db {
   shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
+model Business {
+  id        Int       @id @default(autoincrement())
+  name      String
+  slug      String    @unique
+  status    String    @default("ACTIVE")
+  timezone  String    @default("America/Guayaquil")
+  currency  String    @default("USD")
+  logoUrl   String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  branches  Branch[]
+  products  Product[]
+  clients   Client[]
+  sales     Sale[]
+  cashSessions CashSession[]
+  settings  StoreSettings?
+  memberships BusinessMembership[]
+  activeSessions Session[] @relation("ActiveBusiness")
+  auditLogs AuditLog[]
+}
+
+model Branch {
+  id        Int       @id @default(autoincrement())
+  businessId Int
+  name      String
+  slug      String
+  status    String    @default("ACTIVE")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  business  Business  @relation(fields: [businessId], references: [id], onDelete: Restrict)
+  sales     Sale[]
+  cashSessions CashSession[]
+  membershipBranches MembershipBranch[]
+  activeSessions Session[] @relation("ActiveBranch")
+  auditLogs AuditLog[]
+
+  @@unique([businessId, slug])
+  @@index([businessId, status])
+}
+
+model User {
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
+  name         String
+  passwordHash String
+  status       String    @default("ACTIVE")
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  sessions     Session[]
+  memberships  BusinessMembership[]
+  auditLogs    AuditLog[]
+
+  @@index([status])
+}
+
+model Role {
+  id            Int                  @id @default(autoincrement())
+  key           String               @unique
+  name          String
+  systemManaged Boolean              @default(true)
+  permissions   RolePermission[]
+  memberships   BusinessMembership[]
+}
+
+model Permission {
+  id    Int              @id @default(autoincrement())
+  key   String           @unique
+  name  String
+  roles RolePermission[]
+}
+
+model RolePermission {
+  roleId       Int
+  permissionId Int
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@index([permissionId])
+}
+
+model Session {
+  id        String    @id @default(cuid())
+  userId    Int
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  lastSeenAt DateTime @default(now())
+  activeBusinessId Int?
+  activeBranchId Int?
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activeBusiness Business? @relation("ActiveBusiness", fields: [activeBusinessId], references: [id], onDelete: SetNull)
+  activeBranch Branch? @relation("ActiveBranch", fields: [activeBranchId], references: [id], onDelete: SetNull)
+
+  @@index([userId, expiresAt])
+  @@index([expiresAt])
+  @@index([activeBusinessId])
+  @@index([activeBranchId])
+}
+
+model BusinessMembership {
+  id         Int       @id @default(autoincrement())
+  userId     Int
+  businessId Int
+  roleId     Int
+  status     String    @default("ACTIVE")
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  business   Business  @relation(fields: [businessId], references: [id], onDelete: Restrict)
+  role       Role      @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  branches   MembershipBranch[]
+  cashierSales Sale[] @relation("SaleCashierMembership")
+  cancelledSales Sale[] @relation("SaleCancelledByMembership")
+  openedCashSessions CashSession[] @relation("CashSessionOpenedByMembership")
+  closedCashSessions CashSession[] @relation("CashSessionClosedByMembership")
+  auditLogs AuditLog[]
+
+  @@unique([userId, businessId])
+  @@index([businessId, status])
+}
+
+model AuditLog {
+  id                  String              @id @default(cuid())
+  businessId          Int?
+  branchId            Int?
+  actorUserId         Int?
+  actorMembershipId   Int?
+  action              String
+  entityType          String
+  entityId            String?
+  metadata            Json?
+  createdAt           DateTime            @default(now())
+  business            Business?           @relation(fields: [businessId], references: [id], onDelete: SetNull)
+  branch              Branch?             @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  actorUser           User?               @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+  actorMembership     BusinessMembership? @relation(fields: [actorMembershipId], references: [id], onDelete: SetNull)
+
+  @@index([businessId, createdAt])
+  @@index([branchId, createdAt])
+  @@index([entityType, entityId])
+  @@index([actorUserId, createdAt])
+}
+
+model MembershipBranch {
+  membershipId Int
+  branchId     Int
+  createdAt    DateTime @default(now())
+  membership   BusinessMembership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  branch       Branch             @relation(fields: [branchId], references: [id], onDelete: Restrict)
+
+  @@id([membershipId, branchId])
+  @@index([branchId])
+}
+
 model Product {
   id          Int      @id @default(autoincrement())
+  businessId  Int
   image       String?
   description String?
   name        String
   category    String
-  sku         String   @unique
+  sku         String
   quantity    Int      @default(0)
   minStock    Int      @default(5)
   price       Decimal  @db.Decimal(10,2)   
@@ -28,27 +185,39 @@ model Product {
   in_store    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Restrict)
   saleItems   SaleItem[]
 
-  @@index([category])
-  @@index([quantity])
+  @@unique([businessId, sku])
+  @@index([businessId, createdAt])
+  @@index([businessId, category])
+  @@index([businessId, quantity])
 }
 
 model Client {
   id        Int      @id @default(autoincrement())
-  ci        String   @unique
+  businessId Int
+  ci        String
   name      String
   email     String?
   phone     String?
   address   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  business  Business @relation(fields: [businessId], references: [id], onDelete: Restrict)
   sales     Sale[]
+
+  @@unique([businessId, ci])
+  @@index([businessId, createdAt])
 }
 
 model Sale {
   id            Int        @id @default(autoincrement())
-  receiptNumber String     @unique
+  businessId    Int
+  branchId      Int
+  cashierMembershipId Int?
+  cancelledByMembershipId Int?
+  receiptNumber String
   subtotal      Decimal    @default(0) @db.Decimal(10,2)
   discount      Decimal    @default(0) @db.Decimal(10,2)
   tax           Decimal    @default(0) @db.Decimal(10,2)
@@ -64,14 +233,21 @@ model Sale {
   cancelledBy   String?
   createdAt     DateTime   @default(now())
   clientId      Int?
+  business      Business   @relation(fields: [businessId], references: [id], onDelete: Restrict)
+  branch        Branch     @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  cashierMembership BusinessMembership? @relation("SaleCashierMembership", fields: [cashierMembershipId], references: [id], onDelete: Restrict)
+  cancelledByMembership BusinessMembership? @relation("SaleCancelledByMembership", fields: [cancelledByMembershipId], references: [id], onDelete: Restrict)
   client        Client?    @relation(fields: [clientId], references: [id])
   cashSession   CashSession? @relation(fields: [cashSessionId], references: [id])
   items         SaleItem[]
 
-  @@index([createdAt])
-  @@index([status])
-  @@index([clientId])
-  @@index([paymentMethod])
+  @@unique([businessId, receiptNumber])
+  @@index([businessId, createdAt])
+  @@index([businessId, status, createdAt])
+  @@index([businessId, paymentMethod, createdAt])
+  @@index([businessId, clientId, createdAt])
+  @@index([branchId, createdAt])
+  @@index([cashierMembershipId, createdAt])
   @@index([cashSessionId])
 }
 
@@ -86,10 +262,16 @@ model SaleItem {
   subtotal    Decimal  @db.Decimal(10,2)
   sale        Sale     @relation(fields: [saleId], references: [id])
   product     Product? @relation(fields: [productId], references: [id])
+
+  @@index([saleId])
 }
 
 model CashSession {
   id             Int       @id @default(autoincrement())
+  businessId     Int
+  branchId       Int
+  openedByMembershipId Int?
+  closedByMembershipId Int?
   cashierName    String    @default("Elizabeth Oña")
   openedAt       DateTime  @default(now())
   closedAt       DateTime?
@@ -99,14 +281,21 @@ model CashSession {
   difference     Decimal?  @db.Decimal(10,2)
   status         String    @default("OPEN")
   notes          String?
+  business       Business  @relation(fields: [businessId], references: [id], onDelete: Restrict)
+  branch         Branch    @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  openedByMembership BusinessMembership? @relation("CashSessionOpenedByMembership", fields: [openedByMembershipId], references: [id], onDelete: Restrict)
+  closedByMembership BusinessMembership? @relation("CashSessionClosedByMembership", fields: [closedByMembershipId], references: [id], onDelete: Restrict)
   sales          Sale[]
 
-  @@index([status])
-  @@index([openedAt])
+  @@index([branchId, status, openedAt])
+  @@index([businessId, openedAt])
+  @@index([openedByMembershipId, openedAt])
 }
 
 model StoreSettings {
-  id        Int      @id @default(1)
+  id        Int      @id @default(autoincrement())
+  businessId Int     @unique
   taxRate   Decimal  @default(0.12) @db.Decimal(5,4)
   updatedAt DateTime @updatedAt
+  business  Business @relation(fields: [businessId], references: [id], onDelete: Restrict)
 }

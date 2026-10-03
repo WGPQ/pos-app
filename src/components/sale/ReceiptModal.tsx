@@ -6,6 +6,7 @@ import Badge from '../ui/badge'
 import Button from '../ui/button'
 import { useSales } from '@/hooks/useSales'
 import type { Sale } from '@/services/salesService'
+import { Can, usePermissions } from '@/context/PermissionContext'
 
 interface ReceiptModalProps {
   sale: Sale
@@ -15,6 +16,7 @@ interface ReceiptModalProps {
 
 const ReceiptModal = ({ sale, open, onClose }: ReceiptModalProps) => {
   const { cancelSale } = useSales()
+  const { can } = usePermissions()
   const [currentSale, setCurrentSale] = useState<Sale>(sale)
   const [message, setMessage] = useState<string | null>(null)
 
@@ -28,7 +30,7 @@ const ReceiptModal = ({ sale, open, onClose }: ReceiptModalProps) => {
   }, [currentSale.items])
 
   const handleCancel = async () => {
-    if (currentSale.status === "CANCELLED" || cancelSale.isPending) return
+    if (!can("sale.cancel") || currentSale.status === "CANCELLED" || cancelSale.isPending) return
     const confirmed = window.confirm("¿Deseas anular este recibo y devolver el stock?")
     if (!confirmed) return
     const reason = window.prompt("Indica el motivo de la anulación:")?.trim()
@@ -153,6 +155,7 @@ const ReceiptModal = ({ sale, open, onClose }: ReceiptModalProps) => {
           <Button size="sm" type="button" variant="outline" onClick={onClose}>
             Cerrar
           </Button>
+          <Can permission="sale.cancel">
           <Button
             size="sm"
             type="button"
@@ -162,6 +165,7 @@ const ReceiptModal = ({ sale, open, onClose }: ReceiptModalProps) => {
           >
             {currentSale.status === "CANCELLED" ? "Recibo anulado" : "Anular recibo"}
           </Button>
+          </Can>
         </div>
       </div>
     </Modal>

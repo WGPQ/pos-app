@@ -14,13 +14,16 @@ import AddModalClient from "@/components/Client/AddModalClient";
 import AddModalItem from "@/components/Item/AddModalItem";
 import NewModalSale from "@/components/sale/NewModalSale";
 import Snackbar from "@/components/ui/snackbar";
-import { Package, Plus, ShoppingCart, UserPlus } from "lucide-react";
+import { LogOut, Package, Plus, ShoppingCart, UserPlus } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import React, { useState, useEffect, useRef } from "react";
 import GlobalProductSearch from "@/components/common/GlobalProductSearch";
+import { Can } from "@/context/PermissionContext";
 
 const AppHeader: React.FC = () => {
+  const router = useRouter();
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
   const [showSaleModal, setShowSaleModal] = useState(false);
   const [showSaleToast, setShowSaleToast] = useState(false);
@@ -44,6 +47,11 @@ const AppHeader: React.FC = () => {
   const handleSaleSuccess = () => {
     setShowSaleModal(false);
     setShowSaleToast(true);
+  };
+  const logout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.replace("/login");
+    router.refresh();
   };
 
   useEffect(() => {
@@ -148,6 +156,10 @@ const AppHeader: React.FC = () => {
           >
             <GlobalProductSearch />
             <div className="flex items-center gap-2 2xsm:gap-3">
+              <button onClick={logout} className="flex h-10 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-gray-600 hover:bg-gray-100" aria-label="Cerrar sesión">
+                <LogOut className="h-4 w-4" />
+                <span className="hidden sm:inline">Salir</span>
+              </button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
@@ -165,6 +177,7 @@ const AppHeader: React.FC = () => {
                     Crear
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator className="my-2 bg-gray-100 dark:bg-gray-800" />
+                  <Can permission="product.create">
                   <DropdownMenuItem
                     onSelect={() => setShowNewProduct(true)}
                     className="group cursor-pointer items-start gap-3 rounded-xl px-3 py-2.5"
@@ -181,6 +194,8 @@ const AppHeader: React.FC = () => {
                       </span>
                     </div>
                   </DropdownMenuItem>
+                  </Can>
+                  <Can permission="sale.create">
                   <DropdownMenuItem
                     onSelect={() => setShowSaleModal(true)}
                     className="group cursor-pointer items-start gap-3 rounded-xl px-3 py-2.5"
@@ -197,6 +212,8 @@ const AppHeader: React.FC = () => {
                       </span>
                     </div>
                   </DropdownMenuItem>
+                  </Can>
+                  <Can permission="customer.create">
                   <DropdownMenuItem
                     onSelect={() => setShowNewClient(true)}
                     className="group cursor-pointer items-start gap-3 rounded-xl px-3 py-2.5"
@@ -213,6 +230,7 @@ const AppHeader: React.FC = () => {
                       </span>
                     </div>
                   </DropdownMenuItem>
+                  </Can>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
