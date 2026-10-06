@@ -1,8 +1,8 @@
 {
-  "name": "Punto de venta",
+  "name": "Simplio POS",
   "short_name": "POS",
   "lang": "es",
-  "start_url": "/",
+  "start_url": "/dashboard",
   "scope": "/",
   "display": "standalone",
   "theme_color": "#8200DB",

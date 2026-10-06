@@ -33,7 +33,7 @@ export async function getAuthContext(): Promise<AuthContext | null> {
 
 export async function requirePageAuth(): Promise<AuthContext> {
   const context = await getAuthContext();
-  if (!context) redirect("/login");
+  if (!context) redirect("/auth/login");
   return context;
 }
 

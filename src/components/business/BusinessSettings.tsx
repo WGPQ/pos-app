@@ -6,7 +6,7 @@ import { ExternalLink } from "lucide-react";
 import { usePermissions } from "@/context/PermissionContext";
 import BusinessBrand, { BusinessBrandData } from "./BusinessBrand";
 
-type Business = BusinessBrandData & { address: string | null; email: string | null; phone: string | null; currency: string; timezone: string; slug: string; catalogEnabled: boolean };
+type Business = BusinessBrandData & { businessType: string | null; address: string | null; email: string | null; phone: string | null; currency: string; timezone: string; slug: string; catalogEnabled: boolean };
 export default function BusinessSettings() {
   const router = useRouter();
   const { can } = usePermissions();
@@ -47,7 +47,7 @@ export default function BusinessSettings() {
     event.preventDefault(); if (!business) return;
     setSaving(true); setError(""); setNotice("");
     try {
-      const response = await fetch("/api/business", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: business.name, logoUrl: business.logoUrl, catalogEnabled: business.catalogEnabled, address: business.address, email: business.email, phone: business.phone }) });
+      const response = await fetch("/api/business", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: business.name, logoUrl: business.logoUrl, catalogEnabled: business.catalogEnabled, address: business.address, email: business.email, phone: business.phone, businessType: business.businessType }) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "No se pudo guardar el negocio.");
       setBusiness(data); setNotice("Información del negocio actualizada."); router.refresh();
@@ -63,6 +63,7 @@ export default function BusinessSettings() {
       <fieldset disabled={!editable || uploading || saving} className="space-y-5">
         <div><label htmlFor="company-avatar" className="block text-sm font-semibold text-gray-700">Avatar del negocio</label><input id="company-avatar" type="file" accept="image/jpeg,image/png,image/webp" className="mt-2 block w-full rounded-lg text-sm text-gray-600 file:mr-4 file:rounded-lg file:border-0 file:bg-purple-50 file:px-4 file:py-3 file:font-semibold file:text-purple-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500" onChange={e => { const file = e.target.files?.[0]; e.target.value = ""; if (file) void upload(file); }} /><p className="mt-2 text-xs text-gray-500">JPEG, PNG o WEBP. Máximo 5 MB.</p>{business.logoUrl && <button type="button" onClick={() => { setBusiness({ ...business, logoUrl: null }); setNotice(""); }} className="mt-2 min-h-10 rounded-lg px-3 text-sm text-purple-700 hover:bg-purple-50">Quitar avatar</button>}</div>
         <label className="block text-sm font-semibold text-gray-700">Nombre del negocio<input required maxLength={100} value={business.name} onChange={e => setBusiness({ ...business, name: e.target.value })} className="mt-2 h-11 w-full rounded-xl border border-gray-200 px-3 text-gray-900 outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100" /></label>
+        <label className="block text-sm font-semibold text-gray-700">Giro comercial (opcional)<input maxLength={100} value={business.businessType ?? ""} onChange={e => setBusiness({ ...business, businessType: e.target.value })} placeholder="Ej. Papelería" className="mt-2 h-11 w-full rounded-xl border border-gray-200 px-3 text-gray-900 focus:border-purple-500 focus:ring-2 focus:ring-purple-100" /></label>
       </fieldset>
       <fieldset disabled={!editable || saving} className="space-y-4">
         <legend className="text-base font-bold text-gray-800">Contacto público</legend>

@@ -21,7 +21,7 @@ export default function LoginPage() {
       const response = await fetch("/api/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, password }) });
       const data = await response.json().catch(() => null);
       if (!response.ok) throw new Error(data?.error ?? "No fue posible iniciar sesión.");
-      router.replace("/");
+      router.replace("/dashboard");
       router.refresh();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "No fue posible iniciar sesión.");
@@ -35,9 +35,10 @@ export default function LoginPage() {
       <AuthHeader title="Iniciar sesión" description="Accede de forma segura a tu punto de venta." />
       <label className="block text-sm font-semibold text-gray-700">Correo<input required type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} className="mt-2 h-11 w-full rounded-xl border border-gray-200 px-3 outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100" /></label>
       <PasswordField label="Contraseña" required autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} />
-      <Link href="/forgot-password" className="block text-right text-sm text-purple-700 hover:underline">¿Olvidaste tu contraseña?</Link>
+      <Link href="/auth/forgot-password" className="block text-right text-sm text-purple-700 hover:underline">¿Olvidaste tu contraseña?</Link>
       {error ? <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p> : null}
       <button disabled={loading} className="h-11 w-full rounded-xl bg-purple-700 font-semibold text-white hover:bg-purple-800 disabled:opacity-60">{loading ? "Ingresando…" : "Ingresar"}</button>
+      <p className="text-center text-sm text-gray-500">¿Aún no tienes una cuenta? <Link href="/auth/onboarding" className="font-semibold text-purple-700 hover:underline">Crea tu negocio</Link></p>
     </form>
   </main>;
 }

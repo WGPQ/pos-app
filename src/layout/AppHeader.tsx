@@ -55,7 +55,7 @@ const AppHeader: React.FC<{ userName: string; roleName: string; business: Busine
   };
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
-    router.replace("/login");
+    router.replace("/auth/login");
     router.refresh();
   };
 
@@ -118,7 +118,7 @@ const AppHeader: React.FC<{ userName: string; roleName: string; business: Busine
               {/* Cross Icon */}
             </button>
 
-            <Link href="/" className="lg:hidden">
+            <Link href="/dashboard" className="lg:hidden">
               <BusinessBrand business={business} />
             </Link>
 

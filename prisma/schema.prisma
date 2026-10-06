@@ -21,6 +21,7 @@ model Business {
   status    String    @default("ACTIVE")
   timezone  String    @default("America/Guayaquil")
   currency  String    @default("USD")
+  businessType String?
   address   String?
   email     String?
   phone     String?

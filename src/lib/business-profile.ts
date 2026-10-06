@@ -25,5 +25,12 @@ export function parseBusinessProfile(body: unknown, cloudName: string | undefine
     if (key === "phone" && value && (!/^\+?[\d\s().-]+$/.test(value) || value.replace(/\D/g, "").length < 7 || value.replace(/\D/g, "").length > 15)) throw new Error("Ingresa un teléfono válido con su código de país.");
     contact[key] = value || null;
   }
-  return { name, logoUrl, ...contact, ...(typeof input?.catalogEnabled === "boolean" ? { catalogEnabled: input.catalogEnabled } : {}) };
+  const businessType: { businessType?: string | null } = {};
+  if (input && Object.hasOwn(input, "businessType")) {
+    if (input.businessType !== null && typeof input.businessType !== "string") throw new Error("Giro comercial inválido.");
+    const value = typeof input.businessType === "string" ? input.businessType.trim() : "";
+    if (value.length > 100) throw new Error("El giro comercial admite hasta 100 caracteres.");
+    businessType.businessType = value || null;
+  }
+  return { name, logoUrl, ...contact, ...businessType, ...(typeof input?.catalogEnabled === "boolean" ? { catalogEnabled: input.catalogEnabled } : {}) };
 }

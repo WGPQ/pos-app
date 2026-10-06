@@ -58,7 +58,7 @@ export async function requirePageTenantContext(): Promise<TenantContext> {
   try {
     return await getTenantContext();
   } catch {
-    redirect("/login?error=access");
+    redirect("/auth/login?error=access");
   }
 }
 

@@ -5,7 +5,7 @@ import { LayoutDashboard, MoreHorizontal, Package, ReceiptText, ShoppingCart } f
 import { usePathname } from "next/navigation";
 
 const items = [
-  { href: "/", label: "Panel", icon: LayoutDashboard },
+  { href: "/dashboard", label: "Panel", icon: LayoutDashboard },
   { href: "/products", label: "Inventario", icon: Package },
   { href: "/sales", label: "Caja POS", icon: ShoppingCart },
   { href: "/sales", label: "Ventas", icon: ReceiptText },

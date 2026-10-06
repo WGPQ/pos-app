@@ -43,8 +43,8 @@ export default function PasswordRecoveryForm({ token }: { token?: string }) {
         {error ? <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p> : null}
         <button disabled={loading} className="h-11 w-full rounded-xl bg-purple-700 font-semibold text-white hover:bg-purple-800 disabled:opacity-60">{loading ? "Procesando…" : reset ? "Guardar contraseña" : "Enviar enlace"}</button>
       </>}
-      {reset && !message ? <Link href="/forgot-password" className="block text-center text-sm text-purple-700 hover:underline">Solicitar un nuevo enlace</Link> : null}
-      <Link href="/login" className="block text-center text-sm text-purple-700 hover:underline">Volver a iniciar sesión</Link>
+      {reset && !message ? <Link href="/auth/forgot-password" className="block text-center text-sm text-purple-700 hover:underline">Solicitar un nuevo enlace</Link> : null}
+      <Link href="/auth/login" className="block text-center text-sm text-purple-700 hover:underline">Volver a iniciar sesión</Link>
     </form>
   </main>;
 }

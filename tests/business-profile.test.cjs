@@ -42,3 +42,12 @@ test('contact fields normalize, clear explicitly and preserve omitted values',()
  for(const key of ['address','email','phone']) assert.equal(Object.hasOwn(omitted,key),false);
  for(const invalid of [{email:'bad'},{email:'a@example.com\nBcc: x@y.com'},{phone:'javascript:alert(1)'},{phone:'123'},{address:'x'.repeat(301)},{email:23}]) assert.throws(()=>profile.parseBusinessProfile({name:'Company',logoUrl:null,...invalid},'my-cloud',7));
 });
+
+test('business type is optional, editable and explicitly removable',()=>{
+ const base={name:'Company',logoUrl:null};
+ assert.equal(profile.parseBusinessProfile({...base,businessType:' Retail '},'my-cloud',7).businessType,'Retail');
+ assert.equal(profile.parseBusinessProfile({...base,businessType:''},'my-cloud',7).businessType,null);
+ assert.equal(Object.hasOwn(profile.parseBusinessProfile(base,'my-cloud',7),'businessType'),false);
+ assert.throws(()=>profile.parseBusinessProfile({...base,businessType:32},'my-cloud',7));
+ assert.throws(()=>profile.parseBusinessProfile({...base,businessType:'a'.repeat(101)},'my-cloud',7));
+});

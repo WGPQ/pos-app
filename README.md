@@ -26,7 +26,7 @@ node --test tests/user-management.test.cjs
 
 ## Recuperación de contraseña
 
-Desde `/login`, selecciona «¿Olvidaste tu contraseña?». El correo contiene un enlace de un solo uso que caduca en 30 minutos. Al restablecer la contraseña se invalidan los otros enlaces y se revocan todas las sesiones del usuario. La contraseña nueva debe tener entre 12 y 128 caracteres.
+Desde `/auth/login`, selecciona «¿Olvidaste tu contraseña?». El correo contiene un enlace de un solo uso que caduca en 30 minutos. Al restablecer la contraseña se invalidan los otros enlaces y se revocan todas las sesiones del usuario. La contraseña nueva debe tener entre 12 y 128 caracteres.
 
 Configura estas variables en `.env` y en el entorno de despliegue:
 
@@ -118,3 +118,25 @@ El formulario usa un selector múltiple: en escritorio, Ctrl o ⌘ permiten sele
 Los datos de contacto aparecen en una barra superior adaptable en el catálogo público y en la página de catálogo en pausa. El correo y el teléfono permiten contactar al negocio; los campos vacíos se ocultan. Aplica la migración `20261006010000_business_contact` con `npx prisma migrate deploy` antes de desplegar esta versión.
 
 La tienda y el catálogo en pausa muestran un botón flotante de WhatsApp cuando el teléfono del negocio incluye `+` y código de país (por ejemplo, `+593 99 123 4567`). Abre una conversación con un mensaje sobre los productos del negocio. Sin teléfono internacional se oculta.
+
+## Landing y acceso al portal
+
+La landing pública está en `/`. El panel inicial está en `/dashboard`; el resto de las vistas del portal conserva sus rutas. El acceso está en `/auth/login`, la recuperación en `/auth/forgot-password` y el restablecimiento en `/auth/reset-password`. Las rutas anteriores de autenticación redirigen conservando los parámetros de consulta, para mantener utilizables los enlaces de recuperación ya enviados.
+
+La landing incluye una demostración local con datos ficticios: permite añadir productos, simular un cobro y explorar inventario y catálogo. No consulta ni modifica datos del negocio. El botón «Empezar gratis» abre `/auth/onboarding`; «Iniciar sesión» abre el login; no publica precios, promociones, testimonios ni métricas comerciales sin definir.
+
+## Registro de un nuevo negocio
+
+`/auth/onboarding` ofrece tres pasos: Negocio, Acceso y Revisión. Solicita nombre, correo y teléfono internacional del negocio, y un giro comercial opcional. «Otro rubro» requiere una descripción; este giro es independiente de las categorías de productos y puede editarse en Configuración.
+
+El administrador puede usar el nombre y correo del negocio o datos propios. Siempre debe definir una contraseña de 12 a 128 caracteres. Por ahora no se verifica el correo. Un correo de usuario existente devuelve un conflicto con enlace al login y no modifica la cuenta ni crea una empresa adicional.
+
+`POST /api/auth/register` crea usuario, empresa, sucursal Principal, membresía ADMIN, sesión y auditoría en una sola transacción. Usa USD y America/Guayaquil, inventario vacío, catálogo desactivado y ajustes de tienda predeterminados. La sesión selecciona la empresa y sucursal recién creadas, y el navegador abre `/dashboard`. El endpoint usa el límite de intentos en memoria existente; este límite no es compartido entre instancias del servidor.
+
+Antes de usar el registro, aplica las migraciones con `npx prisma migrate deploy` (incluida `20261006020000_business_type`). Las pruebas usan proveedores y base de datos simulados, sin enviar correos ni registrar usuarios reales.
+
+## Correo de bienvenida
+
+Después de completar el onboarding se envía un correo HTML (con alternativa de texto) al correo del administrador inicial. Incluye el logo `/pos.png`, el nombre de su empresa, enlaces a configuración, productos y punto de venta, instrucciones para publicar el catálogo y soporte por WhatsApp. Los enlaces son normales y requieren sesión; no incluyen contraseña ni tokens de acceso.
+
+Usa `RESEND_API_KEY`, `MAIL_FROM` y `APP_URL` ya configurados para los otros correos. En producción, `APP_URL` debe ser el origen HTTPS público para que enlaces e imagen funcionen; usa un remitente con nombre «Simplio POS» en el dominio verificado. El envío ocurre después de confirmar la transacción. Un fallo se registra con información limitada del proveedor y permite completar el registro y la sesión; por ahora no hay reintento automático.

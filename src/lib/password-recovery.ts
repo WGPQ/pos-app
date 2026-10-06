@@ -23,24 +23,24 @@ export function recoveryMailConfig() {
 
 export async function sendRecoveryEmail(email: string, token: string) {
   const { origin } = recoveryMailConfig();
-  const link = new URL("/reset-password", origin);
+  const link = new URL("/auth/reset-password", origin);
   link.searchParams.set("token", token);
   return sendEmail(email, "Restablece tu contraseña — Punto de venta", `Para restablecer tu contraseña abre este enlace:\n\n${link}\n\nEl enlace caduca en 30 minutos y solo se puede usar una vez. Si no solicitaste este cambio, ignora este correo.`);
 }
 
 export async function sendInvitationEmail(email: string, token: string, businessName: string) {
   const { origin } = recoveryMailConfig();
-  const link = new URL("/reset-password", origin);
+  const link = new URL("/auth/reset-password", origin);
   link.searchParams.set("token", token);
-  return sendEmail(email, "Invitación a Punto de venta", `Has sido invitado a ${businessName}.\n\nDefine tu contraseña para acceder:\n${link}\n\nEl enlace caduca en 24 horas y solo se puede usar una vez.\n\nDespués puedes iniciar sesión con este correo en:\n${origin}/login\n\nSi no esperabas esta invitación, ignora este mensaje.`);
+  return sendEmail(email, "Invitación a Punto de venta", `Has sido invitado a ${businessName}.\n\nDefine tu contraseña para acceder:\n${link}\n\nEl enlace caduca en 24 horas y solo se puede usar una vez.\n\nDespués puedes iniciar sesión con este correo en:\n${origin}/auth/login\n\nSi no esperabas esta invitación, ignora este mensaje.`);
 }
 
-async function sendEmail(email: string, subject: string, text: string) {
+export async function sendEmail(email: string, subject: string, text: string, html?: string) {
   const { apiKey, from } = recoveryMailConfig();
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from, to: [email], subject, text }),
+    body: JSON.stringify({ from, to: [email], subject, text, ...(html ? { html } : {}) }),
     signal: AbortSignal.timeout(10_000),
   });
   const result = await response.json().catch(() => null);

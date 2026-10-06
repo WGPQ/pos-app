@@ -42,7 +42,7 @@ const navItems: NavItem[] = [
   {
     icon: HomeIcon,
     name: "Inicio",
-    path: "/",
+    path: "/dashboard",
     permission: "dashboard.view",
   },
   {
@@ -134,7 +134,7 @@ const AppSidebar: React.FC<{ business: BusinessBrandData }> = ({ business }) => 
         className={`py-8 flex  ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
           }`}
       >
-        <Link href="/" className="min-w-0">
+        <Link href="/dashboard" className="min-w-0">
           <BusinessBrand business={business} compact={!(isExpanded || isHovered || isMobileOpen)} />
         </Link>
       </div>

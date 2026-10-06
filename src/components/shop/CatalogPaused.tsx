@@ -37,7 +37,7 @@ export default function CatalogPaused({ business }: { business: BusinessBrandDat
       <h1 className="mx-auto max-w-2xl text-3xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-5xl">Estamos preparando <span className="text-purple-700">nuestro catálogo</span></h1>
       <p className="mx-auto mt-5 max-w-xl text-base leading-7 text-slate-600 sm:text-lg">El catálogo de {business.name} está en pausa por el momento. Puedes volver a visitarnos más adelante para explorar nuestros productos.</p>
       <div className="mt-8 rounded-2xl bg-indigo-50 px-5 py-5"><p className="font-semibold text-purple-700">Gracias por tu visita</p><p className="mt-1 text-sm leading-6 text-slate-600">Cuando el negocio publique su catálogo, encontrarás aquí sus productos, categorías y precios.</p></div>
-      <div className="mt-8 border-t border-purple-100 pt-6 text-sm text-slate-500"><p>¿Administras este negocio?</p><Link href="/login" className="mt-2 inline-flex min-h-11 items-center gap-2 rounded-xl px-4 font-semibold text-purple-700 hover:bg-purple-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500">Inicia sesión en tu panel de control<ArrowRight className="size-4" aria-hidden="true" /></Link></div>
+      <div className="mt-8 border-t border-purple-100 pt-6 text-sm text-slate-500"><p>¿Administras este negocio?</p><Link href="/auth/login" className="mt-2 inline-flex min-h-11 items-center gap-2 rounded-xl px-4 font-semibold text-purple-700 hover:bg-purple-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500">Inicia sesión en tu panel de control<ArrowRight className="size-4" aria-hidden="true" /></Link></div>
     </section>
   <WhatsAppButton business={business} /></main>;
 }
