@@ -19,7 +19,7 @@ export default async function ShopPage({ params }: { params: Promise<{ slug: str
     return <ShopCatalog initial={data} />;
   } catch (error) {
     if (error instanceof CatalogNotFoundError) {
-      const business = await prisma.business.findFirst({ where: { slug, status: "ACTIVE", catalogEnabled: false }, select: { name: true, logoUrl: true } });
+      const business = await prisma.business.findFirst({ where: { slug, status: "ACTIVE", catalogEnabled: false }, select: { name: true, logoUrl: true, address: true, email: true, phone: true } });
       if (business) return <CatalogPaused business={business} />;
       notFound();
     }

@@ -18,7 +18,7 @@ const normalizedName = Prisma.sql`lower(translate(p."name", 'ÁÉÍÓÚÜÑáé�
 const normalizedText = Prisma.sql`lower(translate(concat_ws(' ', p."name", p."sku", p."description", c."name"), 'ÁÉÍÓÚÜÑáéíóúüñ', 'AEIOUUNaeiouun'))`;
 
 export async function getPublicCatalog(slug: string, params: URLSearchParams) {
-  const business = await prisma.business.findFirst({ where: { slug, status: "ACTIVE", catalogEnabled: true }, select: { id: true, name: true, slug: true, logoUrl: true, currency: true } });
+  const business = await prisma.business.findFirst({ where: { slug, status: "ACTIVE", catalogEnabled: true }, select: { id: true, name: true, address: true, email: true, phone: true, slug: true, logoUrl: true, currency: true } });
   if (!business) throw new CatalogNotFoundError();
   const filters = catalogQuery(params);
   const categories = await prisma.category.findMany({ where: { businessId: business.id, active: true }, select: { id: true, name: true }, orderBy: { name: "asc" } });
@@ -40,7 +40,7 @@ export async function getPublicCatalog(slug: string, params: URLSearchParams) {
     prisma.$queryRaw<Array<{ total: bigint }>>(Prisma.sql`SELECT count(*) AS total FROM "Product" p LEFT JOIN LATERAL (SELECT string_agg(cat."name", ', ' ORDER BY cat."name") AS "name" FROM "ProductCategory" links JOIN "Category" cat ON cat."id" = links."categoryId" WHERE links."productId" = p."id" AND cat."businessId" = ${business.id} AND cat."active" = true) c ON true WHERE ${where}`),
   ]);
   const total = Number(count[0]?.total ?? 0);
-  return { business: { name: business.name, logoUrl: business.logoUrl, slug: business.slug, currency: business.currency }, categories, products: products.map(p => ({ ...p, price: p.price.toString() })), pagination: { page: filters.page, total, totalPages: Math.ceil(total / filters.pageSize) } };
+  return { business: { name: business.name, address: business.address, email: business.email, phone: business.phone, logoUrl: business.logoUrl, slug: business.slug, currency: business.currency }, categories, products: products.map(p => ({ ...p, price: p.price.toString() })), pagination: { page: filters.page, total, totalPages: Math.ceil(total / filters.pageSize) } };
 }
 
 export type PublicCatalog = Awaited<ReturnType<typeof getPublicCatalog>>;

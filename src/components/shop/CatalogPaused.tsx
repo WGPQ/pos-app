@@ -2,9 +2,13 @@ import Link from "next/link";
 import { ArrowRight, Pause } from "lucide-react";
 import BusinessBrand, { BusinessBrandData } from "@/components/business/BusinessBrand";
 
-export default function CatalogPaused({ business }: { business: BusinessBrandData }) {
+import WhatsAppButton from "./WhatsAppButton";
+import CompanyContactBar, { CompanyContact } from "./CompanyContactBar";
+
+export default function CatalogPaused({ business }: { business: BusinessBrandData & CompanyContact }) {
   return <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-50 via-indigo-50 to-white px-4 py-8 sm:py-12">
     <section className="w-full max-w-4xl rounded-3xl border border-white bg-white px-6 py-8 text-center shadow-xl shadow-purple-100/70 sm:px-12 sm:py-10">
+      <div className="mb-6 overflow-hidden rounded-xl"><CompanyContactBar business={business} /></div>
       <div className="mb-8 flex justify-center"><BusinessBrand business={business} /></div>
       <span className="inline-flex items-center gap-2 rounded-full bg-orange-100 px-4 py-2 text-sm font-semibold text-amber-900"><Pause className="size-4" aria-hidden="true" />Catálogo en pausa</span>
       <div className="mx-auto my-8 max-w-sm rounded-3xl bg-gradient-to-br from-indigo-50 to-purple-50 p-5 sm:my-10">
@@ -35,5 +39,5 @@ export default function CatalogPaused({ business }: { business: BusinessBrandDat
       <div className="mt-8 rounded-2xl bg-indigo-50 px-5 py-5"><p className="font-semibold text-purple-700">Gracias por tu visita</p><p className="mt-1 text-sm leading-6 text-slate-600">Cuando el negocio publique su catálogo, encontrarás aquí sus productos, categorías y precios.</p></div>
       <div className="mt-8 border-t border-purple-100 pt-6 text-sm text-slate-500"><p>¿Administras este negocio?</p><Link href="/login" className="mt-2 inline-flex min-h-11 items-center gap-2 rounded-xl px-4 font-semibold text-purple-700 hover:bg-purple-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500">Inicia sesión en tu panel de control<ArrowRight className="size-4" aria-hidden="true" /></Link></div>
     </section>
-  </main>;
+  <WhatsAppButton business={business} /></main>;
 }

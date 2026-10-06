@@ -12,7 +12,7 @@ export async function deliverUserInvitation(user: { id: number; email: string },
     console.info("User invitation accepted by Resend", { emailId });
     return true;
   } catch (error) {
-    console.error("User invitation delivery failed", error instanceof RecoveryEmailError ? { status: error.status, providerCode: error.providerCode } : { providerCode: "network_or_unexpected_error" });
+    console.error("User invitation delivery failed", error instanceof RecoveryEmailError ? { status: error.status, providerCode: error.providerCode, invalidField: error.invalidField } : { providerCode: "network_or_unexpected_error" });
     if (resetId) await prisma.passwordResetToken.deleteMany({ where: { id: resetId } }).catch(() => undefined);
     return false;
   }

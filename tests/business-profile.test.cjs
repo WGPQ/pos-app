@@ -32,3 +32,13 @@ test('update is permission gated, tenant scoped and audited atomically',async()=
  assert.equal((await route.PATCH(request())).status,403);assert.equal(events.length,0);
  denied=false;assert.equal((await route.PATCH(request())).status,200);assert.deepEqual(events,['update','audit']);
 });
+
+test('contact fields normalize, clear explicitly and preserve omitted values',()=>{
+ const result=profile.parseBusinessProfile({name:'Company',logoUrl:null,address:'  Main street  ',email:' shop@example.com ',phone:' +593 99 123 4567 '},'my-cloud',7);
+ assert.equal(result.address,'Main street');assert.equal(result.email,'shop@example.com');assert.equal(result.phone,'+593 99 123 4567');
+ const cleared=profile.parseBusinessProfile({name:'Company',logoUrl:null,address:' ',email:null,phone:''},'my-cloud',7);
+ for(const key of ['address','email','phone']) assert.equal(cleared[key],null);
+ const omitted=profile.parseBusinessProfile({name:'Company',logoUrl:null},'my-cloud',7);
+ for(const key of ['address','email','phone']) assert.equal(Object.hasOwn(omitted,key),false);
+ for(const invalid of [{email:'bad'},{email:'a@example.com\nBcc: x@y.com'},{phone:'javascript:alert(1)'},{phone:'123'},{address:'x'.repeat(301)},{email:23}]) assert.throws(()=>profile.parseBusinessProfile({name:'Company',logoUrl:null,...invalid},'my-cloud',7));
+});

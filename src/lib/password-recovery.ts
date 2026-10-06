@@ -3,15 +3,16 @@ import { createHash } from "crypto";
 export const hashResetToken = (token: string) => createHash("sha256").update(token).digest("hex");
 
 export class RecoveryEmailError extends Error {
-  constructor(public readonly status: number, public readonly providerCode: string) {
+  constructor(public readonly status: number, public readonly providerCode: string, public readonly invalidField?: string) {
     super("Recovery email delivery failed");
   }
 }
 
 export function recoveryMailConfig() {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.MAIL_FROM;
-  const origin = process.env.APP_URL;
+  const clean = (value: string | undefined) => value?.trim().replace(/^(["'])(.*)\1$/s, "$2").trim();
+  const apiKey = clean(process.env.RESEND_API_KEY);
+  const from = clean(process.env.MAIL_FROM);
+  const origin = clean(process.env.APP_URL);
   if (!apiKey || !from || !origin) throw new Error("Password recovery mail is not configured");
   const url = new URL(origin);
   if (url.protocol !== "https:" && !(process.env.NODE_ENV !== "production" && url.protocol === "http:")) {
@@ -45,7 +46,9 @@ async function sendEmail(email: string, subject: string, text: string) {
   const result = await response.json().catch(() => null);
   if (!response.ok) {
     const code = typeof result?.name === "string" && /^[a-z_]{1,80}$/.test(result.name) ? result.name : "unknown";
-    throw new RecoveryEmailError(response.status, code);
+    // Record the rejected field without logging provider messages or addresses.
+    const field = typeof result?.message === "string" ? result.message.match(/Invalid [`'](from|to|subject|text)[`'] field/i)?.[1]?.toLowerCase() : undefined;
+    throw new RecoveryEmailError(response.status, code, field);
   }
   if (typeof result?.id !== "string" || !/^[a-zA-Z0-9-]{1,100}$/.test(result.id)) {
     throw new RecoveryEmailError(response.status, "missing_email_id");

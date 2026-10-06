@@ -6,7 +6,7 @@ import { ExternalLink } from "lucide-react";
 import { usePermissions } from "@/context/PermissionContext";
 import BusinessBrand, { BusinessBrandData } from "./BusinessBrand";
 
-type Business = BusinessBrandData & { currency: string; timezone: string; slug: string; catalogEnabled: boolean };
+type Business = BusinessBrandData & { address: string | null; email: string | null; phone: string | null; currency: string; timezone: string; slug: string; catalogEnabled: boolean };
 export default function BusinessSettings() {
   const router = useRouter();
   const { can } = usePermissions();
@@ -47,7 +47,7 @@ export default function BusinessSettings() {
     event.preventDefault(); if (!business) return;
     setSaving(true); setError(""); setNotice("");
     try {
-      const response = await fetch("/api/business", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: business.name, logoUrl: business.logoUrl, catalogEnabled: business.catalogEnabled }) });
+      const response = await fetch("/api/business", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: business.name, logoUrl: business.logoUrl, catalogEnabled: business.catalogEnabled, address: business.address, email: business.email, phone: business.phone }) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "No se pudo guardar el negocio.");
       setBusiness(data); setNotice("Información del negocio actualizada."); router.refresh();
@@ -55,7 +55,7 @@ export default function BusinessSettings() {
     finally { setSaving(false); }
   }
   return <section className="max-w-3xl space-y-6">
-    <div><p className="text-sm font-semibold text-purple-600">CONFIGURACIÓN</p><h1 className="text-3xl font-bold text-gray-900">Información del negocio</h1><p className="mt-2 text-sm text-gray-600">Personaliza el nombre y el avatar de tu empresa.</p></div>
+    <div><p className="text-sm font-semibold text-purple-600">CONFIGURACIÓN</p><h1 className="text-3xl font-bold text-gray-900">Información del negocio</h1><p className="mt-2 text-sm text-gray-600">Personaliza la identidad y los datos de contacto de tu empresa.</p></div>
     {error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-red-700">{error}{!business && <button onClick={() => void load()} className="ml-3 underline">Reintentar</button>}</p>}
     {notice && <p role="status" className="rounded-xl bg-green-50 p-3 text-green-800">{notice}</p>}
     {loading ? <p role="status">Cargando configuración…</p> : business && <form onSubmit={save} className="space-y-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
@@ -63,6 +63,15 @@ export default function BusinessSettings() {
       <fieldset disabled={!editable || uploading || saving} className="space-y-5">
         <div><label htmlFor="company-avatar" className="block text-sm font-semibold text-gray-700">Avatar del negocio</label><input id="company-avatar" type="file" accept="image/jpeg,image/png,image/webp" className="mt-2 block w-full rounded-lg text-sm text-gray-600 file:mr-4 file:rounded-lg file:border-0 file:bg-purple-50 file:px-4 file:py-3 file:font-semibold file:text-purple-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500" onChange={e => { const file = e.target.files?.[0]; e.target.value = ""; if (file) void upload(file); }} /><p className="mt-2 text-xs text-gray-500">JPEG, PNG o WEBP. Máximo 5 MB.</p>{business.logoUrl && <button type="button" onClick={() => { setBusiness({ ...business, logoUrl: null }); setNotice(""); }} className="mt-2 min-h-10 rounded-lg px-3 text-sm text-purple-700 hover:bg-purple-50">Quitar avatar</button>}</div>
         <label className="block text-sm font-semibold text-gray-700">Nombre del negocio<input required maxLength={100} value={business.name} onChange={e => setBusiness({ ...business, name: e.target.value })} className="mt-2 h-11 w-full rounded-xl border border-gray-200 px-3 text-gray-900 outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100" /></label>
+      </fieldset>
+      <fieldset disabled={!editable || saving} className="space-y-4">
+        <legend className="text-base font-bold text-gray-800">Contacto público</legend>
+        <p className="text-sm text-gray-600">Estos datos son opcionales y aparecerán en la tienda. Deja un campo vacío para ocultarlo. Para habilitar el botón de WhatsApp, usa un teléfono con + y código de país.</p>
+        <label className="block text-sm font-semibold text-gray-700">Dirección<textarea maxLength={300} autoComplete="street-address" value={business.address ?? ""} onChange={e => setBusiness({ ...business, address: e.target.value })} rows={2} className="mt-2 w-full rounded-xl border border-gray-200 p-3 text-gray-900 focus:border-purple-500 focus:ring-2 focus:ring-purple-100" /></label>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="block text-sm font-semibold text-gray-700">Correo de contacto<input type="email" maxLength={254} autoComplete="email" value={business.email ?? ""} onChange={e => setBusiness({ ...business, email: e.target.value })} className="mt-2 h-11 w-full rounded-xl border border-gray-200 px-3 text-gray-900 focus:border-purple-500 focus:ring-2 focus:ring-purple-100" /></label>
+          <label className="block text-sm font-semibold text-gray-700">Teléfono<input type="tel" maxLength={40} autoComplete="tel" placeholder="+593 99 123 4567" value={business.phone ?? ""} onChange={e => setBusiness({ ...business, phone: e.target.value })} className="mt-2 h-11 w-full rounded-xl border border-gray-200 px-3 text-gray-900 focus:border-purple-500 focus:ring-2 focus:ring-purple-100" /></label>
+        </div>
       </fieldset>
       <fieldset disabled={!editable || saving} className="space-y-3 rounded-xl border border-purple-100 bg-purple-50 p-4">
         <legend className="px-2 text-sm font-bold text-gray-800">Catálogo público</legend>

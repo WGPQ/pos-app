@@ -21,6 +21,9 @@ model Business {
   status    String    @default("ACTIVE")
   timezone  String    @default("America/Guayaquil")
   currency  String    @default("USD")
+  address   String?
+  email     String?
+  phone     String?
   logoUrl   String?
   catalogEnabled Boolean @default(false)
   createdAt DateTime  @default(now())

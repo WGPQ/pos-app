@@ -26,7 +26,7 @@ export async function POST(request: Request) {
         console.info("Password recovery email accepted by Resend", { emailId });
       } catch (error) {
         console.error("Password recovery email delivery failed", error instanceof RecoveryEmailError
-          ? { status: error.status, providerCode: error.providerCode }
+          ? { status: error.status, providerCode: error.providerCode, invalidField: error.invalidField }
           : { providerCode: "network_or_unexpected_error" });
         await prisma.passwordResetToken.delete({ where: { id: reset.id } });
       }

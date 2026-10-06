@@ -11,8 +11,8 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "Ely Papelería",
-  description: "Tu tienda en línea de papelería y artículos de oficina",
+  title: "Simplio POS",
+  description: "Gestiona tu negocio con Simplio POS.",
   manifest: "/site.webmanifest",
   icons: {
     icon: [

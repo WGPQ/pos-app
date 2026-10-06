@@ -2,7 +2,7 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Información del negocio
 
-En `/settings` puedes editar el nombre del negocio y subir o quitar su avatar. La imagen admite JPEG, PNG y WEBP de hasta 5 MB y se almacena en Cloudinary. Guarda los cambios para actualizar la identidad del menú lateral y la cabecera móvil. Sin avatar se muestran las iniciales del negocio.
+En `/settings` puedes editar la dirección, el correo y el teléfono de contacto (opcionales), además del nombre del negocio y subir o quitar su avatar. La imagen admite JPEG, PNG y WEBP de hasta 5 MB y se almacena en Cloudinary. Guarda los cambios para actualizar la identidad del menú lateral y la cabecera móvil. Sin avatar se muestran las iniciales del negocio.
 
 Consultar requiere `business.settings.view` y editar o subir imágenes requiere `business.settings.update`. Los cambios afectan únicamente al negocio activo y se registran en auditoría. Moneda y zona horaria se muestran como información de consulta. No requiere migraciones nuevas.
 
@@ -114,3 +114,7 @@ node --test tests/categories-catalog.test.cjs tests/business-profile.test.cjs
 La migración `20261006000000_product_multiple_categories` conserva las asignaciones previas en una tabla de relación. Aplica las migraciones con `npx prisma migrate deploy` y regenera el cliente con `npx prisma generate`.
 
 El formulario usa un selector múltiple: en escritorio, Ctrl o ⌘ permiten seleccionar varias opciones. «Quitar todas las categorías» deja el producto sin clasificación. En el catálogo se filtra por cualquiera de sus categorías activas sin duplicar productos. La API acepta `categoryIds: number[]`; una lista vacía elimina las asignaciones y omitir el campo al editar las conserva. Las categorías inactivas existentes se pueden conservar o retirar, pero no asignar por primera vez.
+
+Los datos de contacto aparecen en una barra superior adaptable en el catálogo público y en la página de catálogo en pausa. El correo y el teléfono permiten contactar al negocio; los campos vacíos se ocultan. Aplica la migración `20261006010000_business_contact` con `npx prisma migrate deploy` antes de desplegar esta versión.
+
+La tienda y el catálogo en pausa muestran un botón flotante de WhatsApp cuando el teléfono del negocio incluye `+` y código de país (por ejemplo, `+593 99 123 4567`). Abre una conversación con un mensaje sobre los productos del negocio. Sin teléfono internacional se oculta.

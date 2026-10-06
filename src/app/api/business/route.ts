@@ -4,7 +4,7 @@ import { getAuthorizationContext, requireApiPermission } from "@/lib/authorizati
 import { parseBusinessProfile } from "@/lib/business-profile";
 import { writeAuditLog } from "@/lib/audit";
 
-const select = { id: true, name: true, logoUrl: true, currency: true, timezone: true, slug: true, catalogEnabled: true };
+const select = { id: true, name: true, address: true, email: true, phone: true, logoUrl: true, currency: true, timezone: true, slug: true, catalogEnabled: true };
 
 export async function GET() {
   const denied = await requireApiPermission("business.settings.view"); if (denied) return denied;

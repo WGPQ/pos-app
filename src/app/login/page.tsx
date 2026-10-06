@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import AuthHeader from "@/components/auth/AuthHeader";
 import PasswordField from "@/components/form/PasswordField";
 
 export default function LoginPage() {
@@ -30,8 +31,8 @@ export default function LoginPage() {
   }
 
   return <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-100 via-purple-50 to-indigo-100 p-4">
-    <form onSubmit={submit} className="w-full max-w-md space-y-5 rounded-3xl bg-white p-8 shadow-xl">
-      <div><p className="text-sm font-semibold text-purple-600">PUNTO DE VENTA</p><h1 className="mt-1 text-3xl font-bold text-gray-900">Iniciar sesión</h1><p className="mt-2 text-sm text-gray-500">Accede de forma segura a tu punto de venta.</p></div>
+    <form onSubmit={submit} className="w-full max-w-md space-y-5 rounded-3xl border border-purple-100 bg-white p-6 shadow-xl shadow-purple-950/10 sm:p-8">
+      <AuthHeader title="Iniciar sesión" description="Accede de forma segura a tu punto de venta." />
       <label className="block text-sm font-semibold text-gray-700">Correo<input required type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} className="mt-2 h-11 w-full rounded-xl border border-gray-200 px-3 outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100" /></label>
       <PasswordField label="Contraseña" required autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} />
       <Link href="/forgot-password" className="block text-right text-sm text-purple-700 hover:underline">¿Olvidaste tu contraseña?</Link>

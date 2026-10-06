@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useState } from "react";
+import AuthHeader from "@/components/auth/AuthHeader";
 import PasswordField from "@/components/form/PasswordField";
 
 export default function PasswordRecoveryForm({ token }: { token?: string }) {
@@ -32,8 +33,8 @@ export default function PasswordRecoveryForm({ token }: { token?: string }) {
   }
 
   return <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-100 via-purple-50 to-indigo-100 p-4">
-    <form onSubmit={submit} className="w-full max-w-md space-y-5 rounded-3xl bg-white p-8 shadow-xl">
-      <div><p className="text-sm font-semibold text-purple-600">PUNTO DE VENTA</p><h1 className="mt-1 text-3xl font-bold text-gray-900">{reset ? "Nueva contraseña" : "Recuperar contraseña"}</h1><p className="mt-2 text-sm text-gray-500">{reset ? "Usa entre 12 y 128 caracteres para tu nueva contraseña." : "Ingresa tu correo y te enviaremos un enlace de recuperación."}</p></div>
+    <form onSubmit={submit} className="w-full max-w-md space-y-5 rounded-3xl border border-purple-100 bg-white p-6 shadow-xl shadow-purple-950/10 sm:p-8">
+      <AuthHeader title={reset ? "Nueva contraseña" : "Recuperar contraseña"} description={reset ? "Usa entre 12 y 128 caracteres para tu nueva contraseña." : "Ingresa tu correo y te enviaremos un enlace de recuperación."} />
       {message ? <p role="status" className="rounded-xl bg-green-50 p-3 text-sm text-green-800">{message}</p> : reset && !token ? <p role="alert" className="text-sm text-red-700">Falta el enlace de recuperación. Solicita uno nuevo.</p> : <>
         {reset ? <>
           <PasswordField label="Nueva contraseña" required autoComplete="new-password" minLength={12} maxLength={128} value={password} onChange={(event) => setPassword(event.target.value)} />

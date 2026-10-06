@@ -13,5 +13,17 @@ export function parseBusinessProfile(body: unknown, cloudName: string | undefine
     }
   }
   if (input && Object.hasOwn(input, "catalogEnabled") && typeof input.catalogEnabled !== "boolean") throw new Error("Estado del catálogo inválido.");
-  return { name, logoUrl, ...(typeof input?.catalogEnabled === "boolean" ? { catalogEnabled: input.catalogEnabled } : {}) };
+  const contact: { address?: string | null; email?: string | null; phone?: string | null } = {};
+  for (const key of ["address", "email", "phone"] as const) {
+    if (!input || !Object.hasOwn(input, key)) continue;
+    const raw = input[key];
+    if (raw !== null && typeof raw !== "string") throw new Error("Datos de contacto inválidos.");
+    const value = typeof raw === "string" ? raw.trim() : "";
+    const limit = key === "address" ? 300 : key === "email" ? 254 : 40;
+    if (value.length > limit) throw new Error(`El campo ${key} supera el límite de ${limit} caracteres.`);
+    if (key === "email" && value && !/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(value)) throw new Error("Ingresa un correo válido.");
+    if (key === "phone" && value && (!/^\+?[\d\s().-]+$/.test(value) || value.replace(/\D/g, "").length < 7 || value.replace(/\D/g, "").length > 15)) throw new Error("Ingresa un teléfono válido con su código de país.");
+    contact[key] = value || null;
+  }
+  return { name, logoUrl, ...contact, ...(typeof input?.catalogEnabled === "boolean" ? { catalogEnabled: input.catalogEnabled } : {}) };
 }
