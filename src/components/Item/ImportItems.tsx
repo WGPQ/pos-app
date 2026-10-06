@@ -221,7 +221,7 @@ const ImportItems = ({ items, className }: ImportItemsProps) => {
             ...baseData,
             image: "",
             description: "",
-            category: "oficina",
+            categoryId: null,
           })
         }
       }

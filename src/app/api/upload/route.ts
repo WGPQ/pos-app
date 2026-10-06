@@ -21,12 +21,13 @@ function hasSupportedImageSignature(buffer: Buffer, type: string) {
 
 export async function POST(req: NextRequest) {
   try {
-    const unauthorized = await requireApiPermission("product.create"); if (unauthorized) return unauthorized;
+    const isBusinessAvatar = req.nextUrl.searchParams.get("purpose") === "business-avatar";
+    const unauthorized = await requireApiPermission(isBusinessAvatar ? "business.settings.update" : "product.create"); if (unauthorized) return unauthorized;
     const { businessId, membershipId, userId } = await getDefaultTenantContext();
     const formData = await req.formData();
     const file = formData.get("file") as File;
 
-    if (!file) {
+    if (!(file instanceof File)) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
     }
     const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -47,7 +48,7 @@ export async function POST(req: NextRequest) {
     // Subimos a Cloudinary
     const result = await new Promise((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream(
-        { folder: `business/${businessId}/products`, resource_type: "image", allowed_formats: ["jpg", "jpeg", "png", "webp"] },
+        { folder: `business/${businessId}/${isBusinessAvatar ? "profile" : "products"}`, resource_type: "image", allowed_formats: ["jpg", "jpeg", "png", "webp"] },
         (error, result) => {
           if (error) reject(error);
           else resolve(result);
@@ -55,7 +56,7 @@ export async function POST(req: NextRequest) {
       );
       stream.end(buffer);
     });
-    await writeAuditLog(prisma, { businessId, actorUserId: userId, actorMembershipId: membershipId, action: "product.image.upload", entityType: "Upload", metadata: { mimeType: file.type, size: file.size } });
+    await writeAuditLog(prisma, { businessId, actorUserId: userId, actorMembershipId: membershipId, action: isBusinessAvatar ? "business.avatar.upload" : "product.image.upload", entityType: "Upload", metadata: { mimeType: file.type, size: file.size } });
 
     return NextResponse.json({ success: true, data: result });
   } catch {

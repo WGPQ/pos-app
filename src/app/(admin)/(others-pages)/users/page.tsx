@@ -1,18 +1,7 @@
-import React from 'react'
+import { hasPermission } from "@/lib/authorization";
+import UsersManagement from "@/components/users/UsersManagement";
 
-const UsersPage = () => {
-  return (
-    <div>
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-        <h2
-          className="text-xl font-semibold text-gray-800 dark:text-white/90"
-          x-text="pageName"
-        >
-          {"Ventas"}
-        </h2>
-      </div>
-    </div>
-  )
+export default async function UsersPage() {
+  if (!await hasPermission("user.view")) return <p role="alert">No tienes permiso para ver los usuarios.</p>;
+  return <UsersManagement />;
 }
-
-export default UsersPage

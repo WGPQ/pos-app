@@ -1,6 +1,7 @@
 import * as yup from "yup";
 
 export const productSchema = yup.object().shape({
+  categoryIds: yup.array().of(yup.string().defined()).defined(),
   name: yup.string().required("El nombre es obligatorio"),
   sku: yup.string().required("El SKU es obligatorio"),
   cost: yup

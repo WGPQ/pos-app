@@ -1,3 +1,5 @@
+import { useQuery } from '@tanstack/react-query';
+import { getCategories } from '@/services/categoryService';
 import React, { useEffect, useRef, useState } from 'react'
 import { Modal } from '../ui/modal'
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -15,6 +17,7 @@ import { useUpload } from '@/hooks/useUpload';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 
 interface FormValues {
+  categoryIds: string[];
   name: string;
   description?: string;
   sku: string;
@@ -29,6 +32,7 @@ const AddModalItem = () => {
   const selectedProduct = useProductStore((state) => state.selectedProduct);
   const setSelectedProduct = useProductStore((state) => state.setSelectedProduct);
   const showNewProduct = useProductStore((state) => state.showNewProduct);
+  const categories = useQuery({ queryKey: ["categories", "all"], queryFn: () => getCategories(true), enabled: showNewProduct });
   const setShowNewProduct = useProductStore((state) => state.setShowNewProduct);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const objectUrlRef = useRef<string | null>(null);
@@ -41,10 +45,12 @@ const AddModalItem = () => {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = useForm({
     resolver: yupResolver(productSchema),
     defaultValues: {
+      categoryIds: [],
       name: "",
       description: "",
       sku: "",
@@ -64,6 +70,7 @@ const AddModalItem = () => {
   useEffect(() => {
     if (selectedProduct) {
       reset({
+        categoryIds: selectedProduct.categoryIds?.map(String) ?? [],
         name: selectedProduct.name,
         description: selectedProduct.description!,
         sku: selectedProduct.sku,
@@ -83,7 +90,8 @@ const AddModalItem = () => {
       }
     } else {
       reset({
-        name: "",
+        categoryIds: [],
+      name: "",
         description: "",
         sku: "",
         quantity: 0,
@@ -108,20 +116,22 @@ const AddModalItem = () => {
     };
   }, []);
 
-  const onSubmit = (data: FormValues) => {
+  const onSubmit = async (data: FormValues) => {
+    setUploadError(null);
     try {
+      const payload = { ...data, categoryIds: data.categoryIds.map(Number) };
       const resolvedImage = imageUrl.trim();
       if (selectedProduct) {
-        editProduct.mutate({
+        await editProduct.mutateAsync({
           id: selectedProduct.id,
-          data: { ...data, image: resolvedImage },
+          data: { ...payload, image: resolvedImage },
         });
       } else {
-        addProduct.mutate({ ...data, image: resolvedImage, category: "oficina", in_store: true });
+        await addProduct.mutateAsync({ ...payload, image: resolvedImage, in_store: true });
       }
       onClose();
     } catch (error) {
-      console.error("Error creating product:", error);
+      setUploadError(error instanceof Error ? error.message : "No se pudo guardar el producto.");
     }
   };
 
@@ -287,6 +297,15 @@ const AddModalItem = () => {
                 {errors.name && <p className="text-red-500">{errors.name.message}</p>}
               </div>
 
+              <div className="col-span-2">
+                <Label htmlFor="categoryIds">Categorías (opcional)</Label>
+                <select id="categoryIds" multiple aria-describedby="category-selection-help" {...register("categoryIds")} className="min-h-32 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm">
+                  {categories.data?.filter(category => category.active || selectedProduct?.categoryIds?.includes(category.id)).map(category => <option key={category.id} value={category.id}>{category.name}{category.active ? "" : " (inactiva)"}</option>)}
+                </select>
+                <p id="category-selection-help" className="mt-2 text-xs text-gray-500">Selecciona varias opciones con Ctrl o ⌘. Sin selección, el producto queda sin categoría.</p>
+                <button type="button" onClick={() => setValue("categoryIds", [], { shouldDirty: true })} className="mt-2 min-h-10 rounded-lg px-3 text-sm text-purple-700 hover:bg-purple-50">Quitar todas las categorías</button>
+                {categories.isError && <p role="alert" className="text-sm text-red-600">No se pudieron cargar las categorías.</p>}
+              </div>
               <div className='col-span-1'>
                 <Label htmlFor="sku">SKU *</Label>
                 <Input id="sku" placeholder="e.g., ESF-001" {...register("sku")} />
@@ -323,7 +342,7 @@ const AddModalItem = () => {
               Cancelar
             </Button>
             <Button size="sm" type='submit'
-              disabled={isUploading}
+              disabled={isUploading || addProduct.isPending || editProduct.isPending}
               startIcon={
                 <SaveIcon className='h-4 w-4' />
               }

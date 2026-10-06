@@ -3,7 +3,10 @@ export interface Product {
   image?: string;
   description?: string;
   name: string;
-  category: string;
+  category?: string | null;
+  categoryId?: number | null;
+  categoryIds?: number[];
+  categories?: { id: number; name: string; active: boolean }[];
   sku: string;
   quantity: number;
   minStock?: number;
@@ -48,7 +51,7 @@ export async function createProduct(product: Omit<Product, "id">): Promise<Produ
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(product),
   });
-  if (!res.ok) throw new Error("Error al crear producto");
+  if (!res.ok) { const data = await res.json().catch(() => null); throw new Error(data?.error || "Error al crear producto"); }
   return res.json();
 }
 
@@ -58,7 +61,7 @@ export async function updateProduct(id: number, product: Partial<Product>): Prom
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(product),
   });
-  if (!res.ok) throw new Error("Error al actualizar producto");
+  if (!res.ok) { const data = await res.json().catch(() => null); throw new Error(data?.error || "Error al actualizar producto"); }
   return res.json();
 }
 

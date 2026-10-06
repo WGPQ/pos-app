@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getProducts,
   createProduct,
@@ -9,6 +9,8 @@ import {
 import { useProductStore } from "@/store/productStore";
 
 export function useProducts() {
+  const queryClient = useQueryClient();
+  const refresh = () => { void queryClient.invalidateQueries({ queryKey: ["products"] }); void queryClient.invalidateQueries({ queryKey: ["pos-products"] }); void queryClient.invalidateQueries({ queryKey: ["categories"] }); };
   const setProducts = useProductStore((state) => state.setProducts);
   const setHasLoadData = useProductStore((state) => state.setHasLoadData);
   const addProductStore = useProductStore((state) => state.addProduct);
@@ -37,13 +39,13 @@ export function useProducts() {
 
   const addProduct = useMutation({
     mutationFn: createProduct,
-    onSuccess: (newProduct) => addProductStore(newProduct),
+    onSuccess: (newProduct) => { addProductStore(newProduct); refresh(); },
   });
 
   const editProduct = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<Product> }) =>
       updateProduct(id, data),
-    onSuccess: (updatedProduct) => updateProductStore(updatedProduct),
+    onSuccess: (updatedProduct) => { updateProductStore(updatedProduct); refresh(); },
   });
 
   const removeProduct = useMutation({

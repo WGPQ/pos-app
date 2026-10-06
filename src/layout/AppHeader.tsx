@@ -15,14 +15,19 @@ import AddModalItem from "@/components/Item/AddModalItem";
 import NewModalSale from "@/components/sale/NewModalSale";
 import Snackbar from "@/components/ui/snackbar";
 import { LogOut, Package, Plus, ShoppingCart, UserPlus } from "lucide-react";
-import Image from "next/image";
+import BusinessBrand, { BusinessBrandData } from "@/components/business/BusinessBrand";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState, useEffect, useRef } from "react";
 import GlobalProductSearch from "@/components/common/GlobalProductSearch";
 import { Can } from "@/context/PermissionContext";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
-const AppHeader: React.FC = () => {
+const AppHeader: React.FC<{ userName: string; roleName: string; business: BusinessBrandData }> = ({ userName, roleName, business }) => {
+  const displayName = userName.trim() || "Usuario";
+  const nameParts = displayName.split(/\s+/);
+  const initials = [nameParts[0], ...(nameParts.length > 1 ? [nameParts[nameParts.length - 1]] : [])]
+    .map((part) => Array.from(part)[0]).join("").toLocaleUpperCase("es");
   const router = useRouter();
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
   const [showSaleModal, setShowSaleModal] = useState(false);
@@ -114,24 +119,13 @@ const AppHeader: React.FC = () => {
             </button>
 
             <Link href="/" className="lg:hidden">
-              <Image
-                width={154}
-                height={32}
-                className="dark:hidden"
-                src="./images/logo/logo.svg"
-                alt="Logo"
-              />
-              <Image
-                width={154}
-                height={32}
-                className="hidden dark:block"
-                src="./images/logo/logo-dark.svg"
-                alt="Logo"
-              />
+              <BusinessBrand business={business} />
             </Link>
 
             <button
               onClick={toggleApplicationMenu}
+              aria-label="Mostrar u ocultar opciones de usuario"
+              aria-expanded={isApplicationMenuOpen}
               className="flex items-center justify-center w-10 h-10 text-gray-700 rounded-lg z-99999 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 lg:hidden"
             >
               <svg
@@ -152,10 +146,19 @@ const AppHeader: React.FC = () => {
           </div>
           <div
             className={`${isApplicationMenuOpen ? "flex" : "hidden"
-              } items-center justify-between w-full gap-4 px-5 py-4 lg:flex lg:flex-1 lg:px-6 lg:py-0 shadow-theme-md lg:justify-between lg:shadow-none`}
+              } flex-wrap items-center justify-between w-full gap-4 px-5 py-4 lg:flex lg:flex-nowrap lg:flex-1 lg:min-w-0 lg:px-6 lg:py-0 shadow-theme-md lg:justify-between lg:shadow-none`}
           >
             <GlobalProductSearch />
-            <div className="flex items-center gap-2 2xsm:gap-3">
+            <div className="flex shrink-0 items-center gap-2 2xsm:gap-3">
+              <div className="flex min-w-0 items-center gap-2" title={displayName}>
+                <Avatar className="size-10" aria-hidden="true">
+                  <AvatarFallback className="bg-purple-100 text-sm font-bold text-purple-700 dark:bg-purple-500/20 dark:text-purple-200">{initials}</AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 max-w-28 xl:max-w-44">
+                  <p className="truncate text-sm font-semibold text-gray-800 dark:text-gray-100">{displayName}</p>
+                  <p className="truncate text-xs text-gray-500 dark:text-gray-400" title={roleName}>{roleName}</p>
+                </div>
+              </div>
               <button onClick={logout} className="flex h-10 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-gray-600 hover:bg-gray-100" aria-label="Cerrar sesión">
                 <LogOut className="h-4 w-4" />
                 <span className="hidden sm:inline">Salir</span>
@@ -234,8 +237,6 @@ const AppHeader: React.FC = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-            {/* <!-- User Area --> */}
-            {/* <UserDropdown /> */}
 
           </div>
         </div>

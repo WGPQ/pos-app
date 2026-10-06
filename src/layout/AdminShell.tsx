@@ -6,16 +6,17 @@ import AppSidebar from "@/layout/AppSidebar";
 import Backdrop from "@/layout/Backdrop";
 import MobileBottomNav from "@/layout/MobileBottomNav";
 import React from "react";
+import type { BusinessBrandData } from "@/components/business/BusinessBrand";
 import { PermissionProvider } from "@/context/PermissionContext";
 
-export default function AdminShell({ children }: { children: React.ReactNode }) {
+export default function AdminShell({ children, userName, roleName, business }: { children: React.ReactNode; userName: string; roleName: string; business: BusinessBrandData }) {
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
   const mainContentMargin = isMobileOpen ? "ml-0" : isExpanded || isHovered ? "lg:ml-[290px]" : "lg:ml-[90px]";
 
   return <PermissionProvider><div className="min-h-screen bg-gradient-to-br from-purple-100 via-purple-50 to-indigo-100 xl:flex">
-    <AppSidebar /><Backdrop />
+    <AppSidebar business={business} /><Backdrop />
     <div className={`flex-1 transition-all duration-300 ease-in-out ${mainContentMargin}`}>
-      <AppHeader />
+      <AppHeader business={business} userName={userName} roleName={roleName} />
       <div className="p-3 pb-24 mx-auto max-w-(--breakpoint-2xl) sm:p-4 sm:pb-24 md:p-6 lg:pb-6">{children}</div>
     </div>
     <MobileBottomNav />

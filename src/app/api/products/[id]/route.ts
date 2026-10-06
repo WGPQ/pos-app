@@ -1,3 +1,4 @@
+import { CategoryError, resolveProductCategories, productCategoryInclude, withProductCategories } from "@/lib/categories";
 import { prisma } from "@/lib/prisma";
 import { getDefaultTenantContext } from "@/lib/default-tenant";
 import { hasPermission, requireApiPermission } from "@/lib/authorization";
@@ -12,6 +13,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     const { businessId, membershipId, userId } = await getDefaultTenantContext();
     const { id } = await params;
     const product = await prisma.product.findFirst({
+      include: productCategoryInclude,
       where: { id: Number(id), businessId },
     });
 
@@ -19,8 +21,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       return NextResponse.json({ error: "Producto no encontrado" }, { status: 404 });
     }
 
-    return NextResponse.json(canViewCost ? product : { ...product, cost: null });
+    const result = withProductCategories(product);
+    return NextResponse.json(canViewCost ? result : { ...result, cost: null });
   } catch (error) {
+    if (error instanceof CategoryError) return NextResponse.json({ error: error.message }, { status: error.status });
     return NextResponse.json({ error: "Error obteniendo producto" }, { status: 500 });
   }
 }
@@ -40,16 +44,19 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       const costPermission = await requireApiPermission("product.cost.view");
       if (costPermission) return costPermission;
     }
-    const existing = await prisma.product.findFirst({ where: { id: Number(id), businessId }, select: { id: true } });
+    const existing = await prisma.product.findFirst({ where: { id: Number(id), businessId }, select: { id: true, categoryLinks: { select: { categoryId: true } } } });
     if (!existing) return NextResponse.json({ error: "Producto no encontrado" }, { status: 404 });
 
+    const categoryValue = Object.hasOwn(body, "categoryIds") ? body.categoryIds : Object.hasOwn(body, "categoryId") ? (body.categoryId ? [body.categoryId] : []) : undefined;
+    const categoryData = await resolveProductCategories(prisma, businessId, categoryValue, existing.categoryLinks.map(c => c.categoryId));
     const product = await prisma.product.update({
+      include: productCategoryInclude,
       where: { id: existing.id },
       data: {
         name: body.name,
         description: body.description,
         image: body.image,
-        category: body.category,
+        ...(categoryData ? { categoryId: categoryData.categoryId, category: categoryData.category, categoryLinks: { deleteMany: {}, create: categoryData.ids.map(categoryId => ({ categoryId })) } } : {}),
         sku: body.sku,
         quantity: body.quantity,
         price: body.price,
@@ -59,8 +66,9 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     });
     await writeAuditLog(prisma, { businessId, actorUserId: userId, actorMembershipId: membershipId, action: "product.update", entityType: "Product", entityId: product.id, metadata: { changedFields: Object.keys(body).filter((key) => key !== "businessId") } });
 
-    return NextResponse.json(product);
+    return NextResponse.json(withProductCategories(product));
   } catch (error) {
+    if (error instanceof CategoryError) return NextResponse.json({ error: error.message }, { status: error.status });
     return NextResponse.json({ error: "Error actualizando producto" }, { status: 500 });
   }
 }
@@ -79,6 +87,7 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
 
     return NextResponse.json({ message: "Producto eliminado" });
   } catch (error) {
+    if (error instanceof CategoryError) return NextResponse.json({ error: error.message }, { status: error.status });
     return NextResponse.json({ error: "Error eliminando producto" }, { status: 500 });
   }
 }

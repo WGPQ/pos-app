@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
 import TooltipProvider from "@/context/TooltipProvider";
@@ -13,7 +13,17 @@ const outfit = Outfit({
 export const metadata: Metadata = {
   title: "Ely Papelería",
   description: "Tu tienda en línea de papelería y artículos de oficina",
+  manifest: "/site.webmanifest",
+  icons: {
+    icon: [
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
 };
+
+export const viewport: Viewport = { themeColor: "#8200DB" };
 
 export default function RootLayout({
   children,
@@ -21,7 +31,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="es" suppressHydrationWarning>
       <body
         className={`${outfit.className} dark:bg-gray-900`}
       >

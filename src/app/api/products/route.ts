@@ -1,3 +1,4 @@
+import { CategoryError, resolveProductCategories, productCategoryInclude, withProductCategories } from "@/lib/categories";
 import { prisma } from "@/lib/prisma";
 import { getDefaultTenantContext } from "@/lib/default-tenant";
 import { hasPermission, requireApiPermission } from "@/lib/authorization";
@@ -22,18 +23,19 @@ export async function GET(request: Request) {
     const where = {
       businessId,
       ...(search ? { OR: [{ name: { contains: search, mode: "insensitive" as const } }, { sku: { contains: search, mode: "insensitive" as const } }] } : {}),
-      ...(category ? { category } : {}),
+      ...(category ? { categoryLinks: { some: { category: { name: category, businessId } } } } : {}),
       ...(stockStatus === "OUT" ? { quantity: 0 } : stockStatus === "IN" ? { quantity: { gt: 0 } } : stockStatus === "LOW" ? { quantity: { gt: 0, lte: 5 } } : {}),
     };
-    const redactCost = <T extends { cost: unknown }>(product: T) => canViewCost ? product : { ...product, cost: null };
-    if (exportAll) return NextResponse.json((await prisma.product.findMany({ where, orderBy: { name: "asc" } })).map(redactCost));
-    if (!usesPagination) return NextResponse.json((await prisma.product.findMany({ where, orderBy: { createdAt: "desc" } })).map(redactCost));
+    const redactCost = (product: Parameters<typeof withProductCategories>[0] & { cost: unknown }) => { const data = withProductCategories(product); return canViewCost ? data : { ...data, cost: null }; };
+    if (exportAll) return NextResponse.json((await prisma.product.findMany({ include: productCategoryInclude, where, orderBy: { name: "asc" } })).map(redactCost));
+    if (!usesPagination) return NextResponse.json((await prisma.product.findMany({ include: productCategoryInclude, where, orderBy: { createdAt: "desc" } })).map(redactCost));
     const [data, total] = await prisma.$transaction([
-      prisma.product.findMany({ where, orderBy: { createdAt: "desc" }, skip: (page - 1) * pageSize, take: pageSize }),
+      prisma.product.findMany({ include: productCategoryInclude, where, orderBy: { createdAt: "desc" }, skip: (page - 1) * pageSize, take: pageSize }),
       prisma.product.count({ where }),
     ]);
     return NextResponse.json({ data: data.map(redactCost), pagination: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) } });
   } catch (error) {
+    if (error instanceof CategoryError) return NextResponse.json({ error: error.message }, { status: error.status });
     return NextResponse.json({ error: "Error obteniendo productos" }, { status: 500 });
   }
 }
@@ -49,16 +51,20 @@ export async function POST(req: Request) {
     const price = Number(body.price);
     const cost = Number(body.cost);
     const minStock = Number(body.minStock ?? 5);
-    if (!body.name?.trim() || !body.sku?.trim() || !body.category?.trim() || !Number.isInteger(quantity) || quantity < 0 || !Number.isFinite(price) || price < 0 || !Number.isFinite(cost) || cost < 0 || !Number.isInteger(minStock) || minStock < 0) {
+    if (!body.name?.trim() || !body.sku?.trim() || !Number.isInteger(quantity) || quantity < 0 || !Number.isFinite(price) || price < 0 || !Number.isFinite(cost) || cost < 0 || !Number.isInteger(minStock) || minStock < 0) {
       return NextResponse.json({ error: "Revisa los campos obligatorios y valores numéricos." }, { status: 400 });
     }
+    const categoryData = await resolveProductCategories(prisma, businessId, body.categoryIds ?? (body.categoryId ? [body.categoryId] : []));
     const product = await prisma.product.create({
+      include: productCategoryInclude,
       data: {
         businessId,
         name: body.name,
         description: body.description,
         image: body.image,
-        category: body.category,
+        categoryId: categoryData?.categoryId,
+        category: categoryData?.category,
+        categoryLinks: { create: (categoryData?.ids ?? []).map(categoryId => ({ categoryId })) },
         sku: body.sku,
         quantity,
         minStock,
@@ -69,8 +75,9 @@ export async function POST(req: Request) {
     });
     await writeAuditLog(prisma, { businessId, actorUserId: userId, actorMembershipId: membershipId, action: "product.create", entityType: "Product", entityId: product.id });
 
-    return NextResponse.json(product, { status: 201 });
+    return NextResponse.json(withProductCategories(product), { status: 201 });
   } catch (error) {
+    if (error instanceof CategoryError) return NextResponse.json({ error: error.message }, { status: error.status });
     console.log({ error });
 
     return NextResponse.json({ error: "Error creando producto" }, { status: 500 });

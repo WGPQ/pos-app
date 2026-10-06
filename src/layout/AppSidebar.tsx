@@ -1,7 +1,7 @@
 "use client";
 import React, { useCallback } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import BusinessBrand, { BusinessBrandData } from "@/components/business/BusinessBrand";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
 import { usePermissions } from "@/context/PermissionContext";
@@ -13,6 +13,8 @@ import {
   CircleDollarSign,
   HomeIcon,
   ShoppingBag,
+  Settings,
+  Tags,
 } from "lucide-react";
 
 type NavItem = {
@@ -23,6 +25,14 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
+  { icon: Tags, name: "Categorías", path: "/categories", permission: "business.settings.view" },
+  { icon: Settings, name: "Configuración", path: "/settings", permission: "business.settings.view" },
+  {
+    icon: Users,
+    name: "Usuarios",
+    path: "/users",
+    permission: "user.view",
+  },
   {
     icon: Calculator,
     name: "Punto de venta",
@@ -67,7 +77,7 @@ const navItems: NavItem[] = [
   },
 ];
 
-const AppSidebar: React.FC = () => {
+const AppSidebar: React.FC<{ business: BusinessBrandData }> = ({ business }) => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const { can, loading } = usePermissions();
   const pathname = usePathname();
@@ -124,32 +134,8 @@ const AppSidebar: React.FC = () => {
         className={`py-8 flex  ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
           }`}
       >
-        <Link href="/">
-          {isExpanded || isHovered || isMobileOpen ? (
-            <>
-              <Image
-                className="dark:hidden"
-                src="/images/logo/logo.svg"
-                alt="Logo"
-                width={150}
-                height={40}
-              />
-              <Image
-                className="hidden dark:block"
-                src="/images/logo/logo-dark.svg"
-                alt="Logo"
-                width={150}
-                height={40}
-              />
-            </>
-          ) : (
-            <Image
-              src="/images/logo/logo-icon.svg"
-              alt="Logo"
-              width={32}
-              height={32}
-            />
-          )}
+        <Link href="/" className="min-w-0">
+          <BusinessBrand business={business} compact={!(isExpanded || isHovered || isMobileOpen)} />
         </Link>
       </div>
       <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
